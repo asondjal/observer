@@ -20,7 +20,7 @@ void SecureFileOwnership(const std::string& file) {
  * @param file document that is supposed to be read
  * @return concatenated file content
  */
-std::string GetVerboseInfo(const std::string& file) {
+const std::string GetVerboseInfo(const std::string& file) {
   std::ifstream info(file);
   std::stringstream buffer;
   buffer << info.rdbuf();
@@ -32,7 +32,7 @@ std::string GetVerboseInfo(const std::string& file) {
  * @param document associated file whose content should be saved into a confidential folder
  * @return path to the file
  */
-std::string SaveConfidentialData(std::string& document) {
+const std::string SaveConfidentialData(std::string& document) {
   namespace fs = std::filesystem;
   std::string dir = "confidential";
   std::string file = dir + document;
@@ -43,5 +43,17 @@ std::string SaveConfidentialData(std::string& document) {
     fs::create_directory(dir);
   }
   return file;
+}
+
+/**
+ * @brief Current Time of the operating system
+ * @return Time in format `TT:MM:YY H:M:S`
+ */
+const std::string GetSystemTimestamp() {
+  auto now = std::chrono::system_clock::now();
+  auto itt = std::chrono::system_clock::to_time_t(now);
+  std::ostringstream ss;
+  ss << std::put_time(std::localtime(&itt), "%d.%m.%Y %H:%M:%S");
+  return ss.str();
 }
 }  // namespace observer::utilities

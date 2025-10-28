@@ -70,7 +70,6 @@ void Logging::TestGetTimestamp() {
   Logging logger("logfile.txt", LogLevel::DEBUG);
   std::string timestamp = logger.GetTimestamp();
 
-  // Check basic format: DD.MM.YYYY HH:MM:SS (length should be 19)
   assert(timestamp.length() == 19);
   assert(timestamp[2] == '.' && timestamp[5] == '.' && timestamp[10] == ' ');
   assert(timestamp[13] == ':' && timestamp[16] == ':');

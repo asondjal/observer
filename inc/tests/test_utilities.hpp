@@ -12,5 +12,6 @@
 void TestSecureFileOwnership();
 void TestGetVerboseInfo();
 void TestSaveConfidentialData();
+void TestGetTimeStamp();
 
 #endif /*INC_TESTS_TEST_UTILITIES_HPP_ */

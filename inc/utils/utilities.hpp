@@ -20,9 +20,10 @@ inline observer::logging::Logging& GetLogger() {
 
 void SecureFileOwnership(const std::string& file);
 
-std::string GetVerboseInfo(const std::string& file);
+const std::string GetVerboseInfo(const std::string& file);
 
-std::string SaveConfidentialData(std::string& document);
+const std::string SaveConfidentialData(std::string& document);
+const std::string GetSystemTimestamp();
 }  // namespace observer::utilities
 
 #endif /* INC_UTILS_UTILITIES_HPP_ */
