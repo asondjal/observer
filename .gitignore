@@ -1,0 +1,16 @@
+build/
+build_workflow/
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+dist/
+cpp_tests/
+cpp-coverage/
+.coverage
+confidential/
+logfile.txt
+run-cpp-coverage.sh
+*.log
+*.tmp
+*.pdf

@@ -1,0 +1,74 @@
+
+ {
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Run CMake",         
+            "type": "shell",                
+            "options": {
+                "cwd": "${workspaceRoot}"   
+            },
+            "command": "cmake",             
+            "args": [
+                "-Bbuild",
+                "-G",
+                "\"Ninja\"",
+                "-DCMAKE_BUILD_TYPE=Debug",
+                "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
+                "-DNLOPT_PYTHON=OFF"
+            ],
+        },
+        
+        {
+            "label": "ninja",
+            "type": "shell",
+            "options": {
+                "cwd": "${workspaceRoot}"
+            },
+            "command": "ninja",
+            "args": [
+                "-Cbuild"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "dependsOn": [
+                "Run CMake"
+            ],
+            "problemMatcher": [
+                {
+                    "owner": "Compiler",
+                    "base": "$gcc",
+                    "fileLocation": ["autoDetect", "${workspaceRoot}/build"],
+                }, 
+                {
+                    "owner": "Linker",
+                    "base": "$gcc",
+                    "fileLocation": ["autoDetect", "${workspaceRoot}/build"],
+                    "pattern": [
+                        {
+                            "file": 1,
+                            "line": 2,
+                            "message": 3,
+                            "regexp": "^(.+):(\\d+):\\s(undefined reference to .+)$"
+                        }
+                    ]
+                }, 
+                {
+                    "owner": "Linker",
+                    "base": "$gcc",
+                    "fileLocation": ["autoDetect", "${workspaceRoot}/build"],
+                    "pattern": [
+                        {
+                            "file": 1,
+                            "line": 2,
+                            "message": 3,
+                            "regexp": "^(.+):(\\d+):\\s(multiple definition of .+)$"
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

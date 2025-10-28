@@ -1,0 +1,11 @@
+# .clang-format
+BasedOnStyle: Google
+IndentWidth: 2
+UseTab: Never
+ColumnLimit: 100
+AllowShortIfStatementsOnASingleLine: false
+BreakBeforeBraces: Attach
+DerivePointerAlignment: false
+PointerAlignment: Left
+SortIncludes: true
+IncludeBlocks: Regroup
