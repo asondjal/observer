@@ -4,7 +4,7 @@ using namespace ftxui;
 
 namespace observer::monitoring {
 
-void ShowBasicAsciiUIForCPU() {
+void ShowInitialData() {
   auto screen = ScreenInteractive::Fullscreen();
   bool running = true;
 

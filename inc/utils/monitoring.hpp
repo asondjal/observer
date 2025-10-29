@@ -9,7 +9,8 @@
 #include "utils/cpu.hpp"
 
 namespace observer::monitoring {
-void ShowBasicAsciiUIForCPU();
+void ShowInitialData();
+
 void ShowRealTimeAsciiUIForCPU();
 }  // namespace observer::monitoring
 

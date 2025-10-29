@@ -152,4 +152,67 @@ double GetAverageCPUFrequency() {
   return sum / freqs.size();
 }
 
+/**
+ * @brief Complex function that reads the absolute load for each CPU-core
+ * @return std::vector<CPUUsage> containing the absolute load for each CPU-core
+ */
+std::vector<CPUUsage> ReadCPUStats() {
+  std::ifstream file("/proc/stat");
+  std::string line;
+  std::vector<CPUUsage> stats;
+
+  while (std::getline(file, line)) {
+    if (line.rfind("cpu", 0) != 0)
+      break;
+    if (line.substr(0, 3) == "cpu ")
+      continue;
+
+    std::istringstream iss(line);
+    std::string cpu_label;
+    CPUUsage usage;
+    unsigned long long user, nice, system, idle, iowait, irq, softirq, steal;
+
+    iss >> cpu_label >> user >> nice >> system >> idle >> iowait >> irq >> softirq >> steal;
+
+    usage.idle = idle + iowait;
+    usage.total = user + nice + system + idle + iowait + irq + softirq + steal;
+
+    stats.push_back(usage);
+  }
+  return stats;
+}
+
+/**
+ * @brief Calculation of the relative CPU-Load per core (in%)
+ * @return std::vector<double> containing the relative load for each CPU-core
+ */
+std::vector<double> GetCPUUsagePerCore() {
+  std::cout << std::fixed << std::setprecision(4);
+  std::vector<CPUUsage> prev = ReadCPUStats();
+  std::this_thread::sleep_for(std::chrono::milliseconds(500));
+  std::vector<CPUUsage> curr = ReadCPUStats();
+
+  std::vector<double> usage;
+  usage.reserve(curr.size());
+
+  for (size_t i = 0; i < curr.size(); ++i) {
+    double total_diff = curr[i].total - prev[i].total;
+    double idle_diff = curr[i].idle - prev[i].idle;
+    double load = 100.0 * (total_diff - idle_diff) / total_diff;
+    usage.push_back(load);
+  }
+  return usage;
+}
+
+/**
+ * @brief Display of current relative load per CPU-core
+ */
+void ShowAllLoadsPerCPU() {
+  std::cout << std::fixed << std::setprecision(4);
+  std::vector<double> load_management = GetCPUUsagePerCore();
+  for (size_t i = 0; i < load_management.size(); i++) {
+    std::cout << i << ". Core: " << load_management[i] << " %" << std::endl;
+  }
+}
+
 }  // namespace observer::cpu

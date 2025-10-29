@@ -10,6 +10,8 @@
 #include "utils/read_data.hpp"
 
 void TestCPUInfo();
-void TestCPUPeriphals();
+void TestCPUTemperatures();
+void TestCPUFrequencies();
+void TestCPULoad();
 
 #endif /* INC_TESTS_TEST_CPU_HPP_ */

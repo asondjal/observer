@@ -14,10 +14,13 @@
 #include <thread>
 #include <vector>
 
-#include "utils/logging.hpp"
 #include "utils/utilities.hpp"
 
 namespace observer::cpu {
+struct CPUUsage {
+  double total = 0.0;
+  double idle = 0.0;
+};
 
 std::string const GetVerboseCPUInfo();
 std::string const GetCPUInfo();
@@ -28,6 +31,9 @@ void ShowAllCPUTemperatures();
 std::vector<double> const GetAllCPUFrequencies();
 void ShowAllCPUFrequencies();
 double GetAverageCPUFrequency();
+std::vector<CPUUsage> ReadCPUStats();
+std::vector<double> GetCPUUsagePerCore();
+void ShowAllLoadsPerCPU();
 }  // namespace observer::cpu
 
 #endif /* INC_UTILS_CPP_HPP_ */
