@@ -1,12 +1,17 @@
 #ifndef INC_UTILS_CPP_HPP_
 #define INC_UTILS_CPP_HPP_
 
+#include <chrono>
 #include <filesystem>
 #include <fstream>
+#include <ftxui/component/component.hpp>
+#include <ftxui/component/screen_interactive.hpp>
+#include <ftxui/dom/elements.hpp>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <thread>
 #include <vector>
 
 #include "utils/logging.hpp"

@@ -1,7 +1,6 @@
 #include <iostream>
 
-#include "utils/cpu.hpp"
-#include "utils/ui_ascii.hpp"
+#include "utils/monitoring.hpp"
 
 int main() {
   std::cout << "Choose Mode:\n";
@@ -10,7 +9,7 @@ int main() {
   std::cin >> choice;
 
   if (choice == 1)
-    observer::ShowAsciiUI(false);
+    observer::monitoring::ShowBasicAsciiUIForCPU();
   else if (choice == 2)
-    observer::ShowAsciiUI(true);
+    observer::monitoring::ShowRealTimeAsciiUIForCPU();
 }

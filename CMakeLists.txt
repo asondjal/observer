@@ -30,7 +30,7 @@ set(PROJECT_SOURCES
     src/logging.cpp
     src/cpu.cpp
     src/utilities.cpp
-    src/ui_ascii.cpp
+    src/monitoring.cpp
 )
 
 add_library(observer_lib STATIC ${PROJECT_SOURCES})

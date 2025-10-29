@@ -1,5 +1,7 @@
 #include "utils/cpu.hpp"
 
+using namespace ftxui;
+
 namespace observer::cpu {
 
 const std::string cpu_path = "/proc/cpuinfo";
