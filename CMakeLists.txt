@@ -14,6 +14,8 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0 --coverage")
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --coverage")
 set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} --coverage")
 
+add_subdirectory(external/ftxui)
+
 add_executable(observer
     src/main.cpp
 )
@@ -28,6 +30,7 @@ set(PROJECT_SOURCES
     src/logging.cpp
     src/cpu.cpp
     src/utilities.cpp
+    src/ui_ascii.cpp
 )
 
 add_library(observer_lib STATIC ${PROJECT_SOURCES})
@@ -35,6 +38,11 @@ target_include_directories(observer_lib PUBLIC ${PROJECT_SOURCE_DIR}/inc)
 target_compile_options(observer_lib PRIVATE -Wall -Wextra -pedantic)
 
 target_link_libraries(observer_lib PUBLIC
+    ftxui::screen    
+    ftxui::dom           
+    ftxui::component
+    poppler-cpp
+    tinyxml2
     poppler-cpp
     tinyxml2
     ${STATGRAB_LIB}

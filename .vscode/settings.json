@@ -85,6 +85,7 @@
     "valarray": "cpp",
     "source_location": "cpp",
     "cassert": "cpp",
-    "barrier": "cpp"
+    "barrier": "cpp",
+    "csignal": "cpp"
   }
 }
