@@ -186,7 +186,7 @@ std::vector<CPUUsage> ReadCPUStats() {
  * @brief Calculation of the relative CPU-Load per core (in%)
  * @return std::vector<double> containing the relative load for each CPU-core
  */
-std::vector<double> GetCPUUsagePerCore() {
+std::vector<double> GetCPULoadPerCore() {
   std::cout << std::fixed << std::setprecision(4);
   std::vector<CPUUsage> prev = ReadCPUStats();
   std::this_thread::sleep_for(std::chrono::milliseconds(500));
@@ -209,7 +209,7 @@ std::vector<double> GetCPUUsagePerCore() {
  */
 void ShowAllLoadsPerCPU() {
   std::cout << std::fixed << std::setprecision(4);
-  std::vector<double> load_management = GetCPUUsagePerCore();
+  std::vector<double> load_management = GetCPULoadPerCore();
   for (size_t i = 0; i < load_management.size(); i++) {
     std::cout << i << ". Core: " << load_management[i] << " %" << std::endl;
   }

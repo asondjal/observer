@@ -32,7 +32,7 @@ std::vector<double> const GetAllCPUFrequencies();
 void ShowAllCPUFrequencies();
 double GetAverageCPUFrequency();
 std::vector<CPUUsage> ReadCPUStats();
-std::vector<double> GetCPUUsagePerCore();
+std::vector<double> GetCPULoadPerCore();
 void ShowAllLoadsPerCPU();
 }  // namespace observer::cpu
 

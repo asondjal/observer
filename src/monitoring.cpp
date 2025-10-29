@@ -57,48 +57,65 @@ void ShowRealTimeAsciiUIForCPU() {
   auto screen = ScreenInteractive::Fullscreen();
   std::atomic<bool> running = true;
 
+    std::string cpu_name = observer::cpu::GetCPUInfo();
   std::string date = observer::utilities::GetSystemTimestamp();
   double avg_temp = 0.0;
-  std::vector<double> temps;
-  std::string cpu_name = observer::cpu::GetCPUInfo();
+   double avg_freq = 0.0000;
+  std::vector<double> temps = observer::cpu::GetAllCPUTemperatures();
+  std::vector<double> freqs = observer::cpu::GetAllCPUFrequencies();
+  std::vector<double> loads = observer::cpu::GetCPULoadPerCore();
 
-  Component renderer = Renderer([&] {
-    std::vector<Element> temp_bars;
-    for (size_t i = 0; i < temps.size(); ++i) {
-      temp_bars.push_back(hbox({
-          text("Core " + std::to_string(i) + ": "),
-          gauge(temps[i] / 100.0),
-          text(" " + std::to_string(temps[i]) + "°C"),
-      }));
-    }
+Component renderer = Renderer([&] {
+  std::vector<Element> core_rows;
+  for (size_t i = 0; i < temps.size(); ++i) {
+    core_rows.push_back(hbox({
+        text("Core " + std::to_string(i)) | size(WIDTH, EQUAL, 8),
+        separator(),
+        text(std::to_string(temps[i]) + " °C") | size(WIDTH, EQUAL, 14),
+        separator(),
+        text(std::to_string(freqs[i]) + " GHz") | size(WIDTH, EQUAL, 16),
+        separator(),
+        text(std::to_string(loads[i]) + " %") | size(WIDTH, EQUAL, 10),
+    }));
+  }
 
-    return vbox({
-               text("OBSERVER REAL-TIME MONITOR") | bold | center | color(Color::DarkOrange),
-               separator(),
-               text("Current time: " + date),
-               separator(),
-               text("CPU: " + cpu_name),
-               separator(),
-               vbox(temp_bars),
-               separator(),
-               text("Average Temperature: " + std::to_string(avg_temp) + " °C"),
-               separator(),
-               text("Press [Q] or [q]") | bold | center | color(Color::DarkOrange),
-               separator(),
-           }) |
-           border;
-  });
+  return vbox({
+    text("=== OBSERVER: CPU MONITORING (REAL-TIME MODE) ===") | bold | center | color(Color::DarkOrange),
+    separator(),
+    text("CPU: " + cpu_name) | bold,
+    separator(),
+    hbox({
+        text("Core") | bold | size(WIDTH, EQUAL, 8),
+        text("| Temp (°C)") | bold | size(WIDTH, EQUAL, 14),
+        text("| Freq (GHz)") | bold | size(WIDTH, EQUAL, 16),
+        text("| Load (%)") | bold | size(WIDTH, EQUAL, 10),
+    }),
+    separator(),
+    vbox(core_rows),
+    separator(),
+    text("Average Temperature: " + std::to_string(avg_temp) + " °C"),
+    text("Average Frequency: " + std::to_string(avg_freq) + " GHz"),
+    separator(),
+    text("Programm started: " + date),
+        separator(),
+    text("Press [Q] or [q] to quit") | bold | center | color(Color::LightSkyBlue3Bis)
+  }) | border;
+});
+
 
   // Background-Thread for live-updates
-  std::thread updater([&] {
-    while (running) {
-      temps = observer::cpu::GetAllCPUTemperatures();
-      avg_temp = observer::cpu::GetAverageCPUTemperature();
-      screen.PostEvent(Event::Custom);  // Refresh
-      std::this_thread::sleep_for(
-          std::chrono::milliseconds(1000));  // Sampling rate: Listen once every 1s
-    }
-  });
+std::thread updater([&] {
+  while (running) {
+    temps = observer::cpu::GetAllCPUTemperatures();
+    freqs = observer::cpu::GetAllCPUFrequencies();
+    loads = observer::cpu::GetCPULoadPerCore();
+    avg_temp = observer::cpu::GetAverageCPUTemperature();
+    avg_freq = observer::cpu::GetAverageCPUFrequency();
+    screen.PostEvent(Event::Custom);
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+  }
+});
+
 
   // Terminate the thread
   renderer |= CatchEvent([&](Event event) {
