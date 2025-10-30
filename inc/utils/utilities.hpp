@@ -1,6 +1,7 @@
 #ifndef INC_UTILS_UTILITIES_HPP_
 #define INC_UTILS_UTILITIES_HPP_
 
+#include <pwd.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
@@ -18,12 +19,12 @@ inline observer::logging::Logging& GetLogger() {
   return logger;
 }
 
-void SecureFileOwnership(const std::string& file);
-
 const std::string GetVerboseInfo(const std::string& file);
-
 const std::string SaveConfidentialData(std::string& document);
 const std::string GetSystemTimestamp();
+const std::string GetCurrentUser();
+const std::string GetFileOwner(const std::string& path);
+void SecureFileOwnership(const std::string& file);
 }  // namespace observer::utilities
 
 #endif /* INC_UTILS_UTILITIES_HPP_ */

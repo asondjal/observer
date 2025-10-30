@@ -9,6 +9,8 @@
 #include "utils/logging.hpp"
 #include "utils/utilities.hpp"
 
+void TestCurrentUser();
+void TestFileOwner();
 void TestSecureFileOwnership();
 void TestGetVerboseInfo();
 void TestSaveConfidentialData();
