@@ -13,5 +13,6 @@ void TestCPUInfo();
 void TestCPUTemperatures();
 void TestCPUFrequencies();
 void TestCPULoad();
+void TestCPUIdle();
 
 #endif /* INC_TESTS_TEST_CPU_HPP_ */

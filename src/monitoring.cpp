@@ -60,8 +60,13 @@ void ShowRealTimeAsciiUIForCPU() {
   std::string cpu_name = observer::cpu::GetCPUInfo();
   std::string date = observer::utilities::GetSystemTimestamp();
   std::string current_user = observer::utilities::GetCurrentUser();
+
   double avg_temp = 0.0;
   double avg_freq = 0.0000;
+  double idle_percent = 0.0;
+  int ctx_switches = 0;
+  int interrupts = 0;
+
   std::vector<double> temps = observer::cpu::GetAllCPUTemperatures();
   std::vector<double> freqs = observer::cpu::GetAllCPUFrequencies();
   std::vector<double> loads = observer::cpu::GetCPULoadPerCore();
@@ -80,22 +85,37 @@ void ShowRealTimeAsciiUIForCPU() {
       }));
     }
 
-    return vbox({text("=== OBSERVER: CPU MONITORING ===") | bold | center |
-                     color(Color::DarkOrange),
-                 separator(), text("CPU: " + cpu_name) | bold | color(Color::DarkOrange), separator(),
-                 hbox({
-                     text("Core") | bold | size(WIDTH, EQUAL, 8),
-                     text("| Temp (°C)") | bold | size(WIDTH, EQUAL, 14),
-                     text("| Freq (MHz)") | bold | size(WIDTH, EQUAL, 16),
-                     text("| Load (%)") | bold | size(WIDTH, EQUAL, 10),
-                 }),
-                 separator(), vbox(core_rows), separator(),
-                 text("Average Temperature: " + std::to_string(avg_temp) + " °C"), separator(),
-                 text("Average Frequency: " + std::to_string(avg_freq) + " MHz"), separator(),
-                 text("Observation started: " + date), separator(),
-                 text("Current user: " + current_user) | bold | color(Color::DarkOrange), separator(),
-                 text("EXIT: Press [Q] or [q]") | bold | center |
-                     color(Color::LightSkyBlue3Bis)}) | borderLight;
+    return vbox(
+               {text("=== OBSERVER: CPU MONITORING ===") | bold | center | color(Color::DarkOrange),
+                separator(),
+                text("CPU: " + cpu_name) | bold | color(Color::DarkOrange),
+                separator(),
+                hbox({
+                    text("Core") | bold | size(WIDTH, EQUAL, 8),
+                    text("| Temp (°C)") | bold | size(WIDTH, EQUAL, 14),
+                    text("| Freq (MHz)") | bold | size(WIDTH, EQUAL, 16),
+                    text("| Load (%)") | bold | size(WIDTH, EQUAL, 10),
+                }),
+                separator(),
+                vbox(core_rows),
+                separator(),
+                text("Average Temperature: " + std::to_string(avg_temp) + " °C"),
+                separator(),
+                text("Average Frequency: " + std::to_string(avg_freq) + " MHz"),
+                separator(),
+
+                text("Idle: " + std::to_string(idle_percent) + "%"),
+                separator(),
+                text("Context Switches/s: " + std::to_string(ctx_switches)),
+                separator(),
+                text("Interrupts/s: " + std::to_string(interrupts)),
+                separator(),
+                text("Observation started: " + date),
+                separator(),
+                text("Current user: " + current_user) | bold | color(Color::DarkOrange),
+                separator(),
+                text("EXIT: Press [Q] or [q]") | bold | center | color(Color::LightSkyBlue3Bis)}) |
+           borderLight;
   });
 
   // Background-thread for live-updates
@@ -106,6 +126,9 @@ void ShowRealTimeAsciiUIForCPU() {
       loads = observer::cpu::GetCPULoadPerCore();
       avg_temp = observer::cpu::GetAverageCPUTemperature();
       avg_freq = observer::cpu::GetAverageCPUFrequency();
+      idle_percent = observer::cpu::GetIdlePercentage();
+      ctx_switches = observer::cpu::GetContextSwitchesPerSec();
+      interrupts = observer::cpu::GetInterruptsPerSec();
       screen.PostEvent(Event::Custom);
       std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     }

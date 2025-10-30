@@ -34,6 +34,10 @@ double GetAverageCPUFrequency();
 std::vector<CPUUsage> ReadCPUStats();
 std::vector<double> GetCPULoadPerCore();
 void ShowAllLoadsPerCPU();
+double GetIdlePercentage();
+int GetContextSwitchesPerSec();
+int GetInterruptsPerSec();
+
 }  // namespace observer::cpu
 
 #endif /* INC_UTILS_CPP_HPP_ */

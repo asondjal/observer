@@ -1,23 +1,21 @@
 #include "utils/cpu.hpp"
 
-using namespace ftxui;
-
 namespace observer::cpu {
-
-const std::string cpu_path = "/proc/cpuinfo";
 
 /**
  * @brief Verbose information about the CPU
  * @return Verbose information
  */
-const std::string GetVerboseCPUInfo() { return observer::utilities::GetVerboseInfo(cpu_path); }
+const std::string GetVerboseCPUInfo() {
+  return observer::utilities::GetVerboseInfo("/proc/cpuinfo");
+}
 
 /**
  * @brief Basic information from the CPU
  * @return Model Name
  */
 const std::string GetCPUInfo() {
-  std::ifstream cpuinfo(cpu_path);
+  std::ifstream cpuinfo("/proc/cpuinfo");
   std::string line;
   while (std::getline(cpuinfo, line)) {
     if (line.find("model name") != std::string::npos)
@@ -213,6 +211,97 @@ void ShowAllLoadsPerCPU() {
   for (size_t i = 0; i < load_management.size(); i++) {
     std::cout << i << ". Core: " << load_management[i] << " %" << std::endl;
   }
+}
+
+/**
+ * @brief Reads the overall CPU idle percentage.
+ * @return the system-wide CPU idle percentage
+ */
+double GetIdlePercentage() {
+  std::cout << std::fixed << std::setprecision(4);
+  std::ifstream file("/proc/stat");
+  std::string line;
+  unsigned long long user, nice, system, idle, iowait, irq, softirq, steal;
+
+  if (std::getline(file, line) && line.rfind("cpu ", 0) == 0) {
+    std::istringstream iss(line);
+    std::string label;
+    iss >> label >> user >> nice >> system >> idle >> iowait >> irq >> softirq >> steal;
+  }
+
+  unsigned long long prev_idle = idle + iowait;
+  unsigned long long prev_total = user + nice + system + idle + iowait + irq + softirq + steal;
+
+  std::this_thread::sleep_for(std::chrono::milliseconds(500));
+
+  file.clear();
+  file.seekg(0, std::ios::beg);
+  std::getline(file, line);
+  std::istringstream iss(line);
+  std::string label;
+  iss >> label >> user >> nice >> system >> idle >> iowait >> irq >> softirq >> steal;
+
+  unsigned long long curr_idle = idle + iowait;
+  unsigned long long curr_total = user + nice + system + idle + iowait + irq + softirq + steal;
+
+  double total_diff = curr_total - prev_total;
+  double idle_diff = curr_idle - prev_idle;
+
+  if (total_diff == 0)
+    return 0.0;
+  return 100.0 * idle_diff / total_diff;
+}
+
+/**
+ * @brief Reads the number of context switches per second.
+ * @return amount of context switches per second
+ */
+int GetContextSwitchesPerSec() {
+  auto read_ctx_switches = []() -> unsigned long long {
+    std::ifstream file("/proc/stat");
+    std::string line;
+    while (std::getline(file, line)) {
+      if (line.rfind("ctxt", 0) == 0) {
+        unsigned long long ctxt;
+        std::istringstream iss(line.substr(5));
+        iss >> ctxt;
+        return ctxt;
+      }
+    }
+    return 0;
+  };
+
+  unsigned long long prev = read_ctx_switches();
+  std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+  unsigned long long curr = read_ctx_switches();
+
+  return static_cast<int>(curr - prev);
+}
+
+/**
+ * @brief Reads the number of interrupts per second.
+ * @return amount of interrupts per second
+ */
+int GetInterruptsPerSec() {
+  auto read_interrupts = []() -> unsigned long long {
+    std::ifstream file("/proc/stat");
+    std::string line;
+    while (std::getline(file, line)) {
+      if (line.rfind("intr", 0) == 0) {
+        unsigned long long intr;
+        std::istringstream iss(line.substr(5));
+        iss >> intr;
+        return intr;
+      }
+    }
+    return 0;
+  };
+
+  unsigned long long prev = read_interrupts();
+  std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+  unsigned long long curr = read_interrupts();
+
+  return static_cast<int>(curr - prev);
 }
 
 }  // namespace observer::cpu
