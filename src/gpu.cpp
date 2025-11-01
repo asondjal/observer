@@ -36,9 +36,9 @@ GPUCompany DetectGPUCompany() {
 
 GPUInfo ReadGPUInfo() {
   GPUInfo gpu_info;
-  gpu_info.vendor = DetectGPUCompany();
+  gpu_info.company = DetectGPUCompany();
 
-  switch (gpu_info.vendor) {
+  switch (gpu_info.company) {
     case GPUCompany::NVIDIA: {
       // Query over nvidia-smi
       std::string cmd =
@@ -97,19 +97,32 @@ GPUInfo ReadGPUInfo() {
   return gpu_info;
 }
 
+const std::string GetVerboseGPUInfo() {
+  GPUInfo info = ReadGPUInfo();
+  std::stringstream ss;
+
+  ss << "=== GPU INFORMATION ===\n"
+     << "Name:          " << info.name << "\n"
+     << "Temperature:   " << info.temperature << " °C\n"
+     << "Usage:         " << info.usage << " %\n"
+     << "Memory Used:   " << info.memory_used << " MB\n"
+     << "Memory Total:  " << info.memory_total << " MB\n"
+     << "Clock:         " << info.clock_frequency << " GHz\n";
+
+  std::ofstream outfile("./confidential/gpu_info.txt");
+  outfile << ss.str();
+  outfile.close();
+  observer::utilities::SecureFileOwnership("./confidential/gpu_info.txt");
+
+  return ss.str();
+}
+
 /**
  * @brief Display of the attributes of the GPU
  */
 void ShowGPUInfo() {
   GPUInfo info = ReadGPUInfo();
-
-  std::cout << "=== GPU INFORMATION ===\n";
-  std::cout << "Name:          " << info.name << "\n";
-  std::cout << "Temperature:   " << info.temperature << " °C\n";
-  std::cout << "Usage:         " << info.usage << " %\n";
-  std::cout << "Memory Used:   " << info.memory_used << " MB\n";
-  std::cout << "Memory Total:  " << info.memory_total << " MB\n";
-  std::cout << "Clock:         " << info.clock_frequency << " GHz\n";
+  std::cout << GetVerboseGPUInfo();
 }
 
 }  // namespace observer::gpu

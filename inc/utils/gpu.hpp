@@ -1,6 +1,7 @@
 #ifndef INC_UTILS_GPU_HPP_
 #define INC_UTILS_GPU_HPP_
 
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -17,7 +18,7 @@ struct GPUInfo {
   double memory_used = 0.0;
   double memory_total = 0.0;
   double clock_frequency = 0.0;
-  GPUCompany vendor = GPUCompany::UNKNOWN;
+  GPUCompany company = GPUCompany::UNKNOWN;
 };
 
 GPUInfo ReadGPUInfo();
@@ -25,6 +26,8 @@ GPUInfo ReadGPUInfo();
 void ShowGPUInfo();
 
 GPUCompany DetectGPUCompany();
+
+const std::string GetVerboseGPUInfo();
 
 }  // namespace observer::gpu
 
