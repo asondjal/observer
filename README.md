@@ -4,7 +4,7 @@
 
 - Creation of a monitoring tool showing basic data and real-time data
 - Design: Display of the information by using ASCII characters from FTXUI, shoutout to [ArthurSonzogni](https://github.com/ArthurSonzogni/FTXUI)
-- Focus on periphals: CPU, GPU, RAM, storage and basic network communication
+- Focus on periphals: CPU, RAM, storage and basic network communication
 - High Performance: Code will be written only in C++
 
 ## **Approach: Iterative development and assesment of monitoring tools**
