@@ -23,7 +23,7 @@ struct CPUUsage {
 };
 
 std::string const GetVerboseCPUInfo();
-std::string const GetCPUInfo();
+std::string const GetCPUModel();
 void SaveConfidentialCPUInfo();
 std::vector<double> const GetAllCPUTemperatures();
 double GetAverageCPUTemperature();

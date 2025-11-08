@@ -3,6 +3,16 @@
 namespace observer::utilities {
 
 /**
+ * @brief Reading data from a file and storing in a buffer
+ * @param file document that is supposed to be read
+ * @return concatenated file content
+ */
+const std::string GetVerboseInfo(const std::string& file) {
+  observer::read_data::ReadData content(file);
+  return content.ReadFile();
+}
+
+/**
  * @brief Detect the current user
  * @return Name of the current user
  */
@@ -67,21 +77,9 @@ void SecureFileOwnership(const std::string& file) {
 }
 
 /**
- * @brief Reading data from a file and storing in a buffer
- * @param file document that is supposed to be read
- * @return concatenated file content
- */
-const std::string GetVerboseInfo(const std::string& file) {
-  std::ifstream info(file);
-  std::stringstream buffer;
-  buffer << info.rdbuf();
-  return buffer.str();
-}
-
-/**
  * @brief Saving confidential info
  * @param document associated file whose content should be saved into a confidential folder
- * @return path to the file
+ * @return path to the saved file containing the confidential data
  */
 const std::string SaveConfidentialData(std::string& document) {
   namespace fs = std::filesystem;

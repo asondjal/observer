@@ -31,6 +31,7 @@ set(PROJECT_SOURCES
     src/cpu.cpp
     src/utilities.cpp
     src/monitoring.cpp
+    src/ram.cpp
 )
 
 add_library(observer_lib STATIC ${PROJECT_SOURCES})
@@ -62,6 +63,7 @@ add_executable(cpp_tests
     cpp_tests/test_read_data.cpp
     cpp_tests/test_logging.cpp
     cpp_tests/test_cpu.cpp
+    cpp_tests/test_ram.cpp
 )
 
 target_include_directories(cpp_tests PRIVATE ${PROJECT_SOURCE_DIR}/inc)

@@ -10,7 +10,7 @@ void ShowInitialData() {
 
   // Preprocessing of the data
   std::string date = observer::utilities::GetSystemTimestamp();
-  std::string cpu_name = observer::cpu::GetCPUInfo();
+  std::string cpu_name = observer::cpu::GetCPUModel();
   auto temps = observer::cpu::GetAllCPUTemperatures();
   double avg_temp = observer::cpu::GetAverageCPUTemperature();
 
@@ -57,7 +57,7 @@ void ShowRealTimeAsciiUIForCPU() {
   auto screen = ScreenInteractive::Fullscreen();
   std::atomic<bool> running = true;
 
-  std::string cpu_name = observer::cpu::GetCPUInfo();
+  std::string cpu_name = observer::cpu::GetCPUModel();
   std::string date = observer::utilities::GetSystemTimestamp();
   std::string current_user = observer::utilities::GetCurrentUser();
 

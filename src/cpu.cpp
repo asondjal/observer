@@ -14,7 +14,7 @@ const std::string GetVerboseCPUInfo() {
  * @brief Basic information from the CPU
  * @return Model Name
  */
-const std::string GetCPUInfo() {
+const std::string GetCPUModel() {
   std::ifstream cpuinfo("/proc/cpuinfo");
   std::string line;
   while (std::getline(cpuinfo, line)) {
