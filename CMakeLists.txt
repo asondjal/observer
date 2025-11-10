@@ -32,6 +32,7 @@ set(PROJECT_SOURCES
     src/utilities.cpp
     src/monitoring.cpp
     src/ram.cpp
+    src/storage.cpp
 )
 
 add_library(observer_lib STATIC ${PROJECT_SOURCES})
@@ -57,6 +58,8 @@ add_executable(cpp_tests
     src/read_data.cpp
     src/logging.cpp
     src/utilities.cpp
+    src/ram.cpp
+    src/storage.cpp
 
     cpp_tests/main.cpp
     cpp_tests/test_utilities.cpp
