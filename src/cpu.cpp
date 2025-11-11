@@ -81,10 +81,10 @@ void ShowAllCPUTemperatures() {
 
 /**
  * @brief Calculation of the average temperature for the CPU
- * @return Average temperature for the CPU with an accuracy of 4 decimals
+ * @return Average temperature for the CPU with an accuracy of 2 decimals
  */
 double GetAverageCPUTemperature() {
-  std::cout << std::fixed << std::setprecision(4);
+  std::cout << std::fixed << std::setprecision(2);
   std::vector<double> cpu_temps = GetAllCPUTemperatures();
   double average_cpu_temp = 0.0000;
   for (double value : cpu_temps) {
@@ -155,7 +155,7 @@ double GetAverageCPUFrequency() {
  * @return std::vector<CPUUsage> containing the absolute load for each CPU-core
  */
 std::vector<CPUUsage> ReadCPUStats() {
-    std::cout << std::fixed << std::setprecision(2);
+  std::cout << std::fixed << std::setprecision(2);
   std::ifstream file("/proc/stat");
   std::string line;
   std::vector<CPUUsage> stats;
@@ -258,6 +258,7 @@ double GetIdlePercentage() {
  * @return amount of context switches per second
  */
 int GetContextSwitchesPerSec() {
+  std::cout << std::fixed << std::setprecision(2);
   auto read_ctx_switches = []() -> unsigned long long {
     std::ifstream file("/proc/stat");
     std::string line;
@@ -284,6 +285,7 @@ int GetContextSwitchesPerSec() {
  * @return amount of interrupts per second
  */
 int GetInterruptsPerSec() {
+  std::cout << std::fixed << std::setprecision(2);
   auto read_interrupts = []() -> unsigned long long {
     std::ifstream file("/proc/stat");
     std::string line;

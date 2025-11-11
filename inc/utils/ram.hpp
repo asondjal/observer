@@ -1,8 +1,9 @@
 #ifndef INC_UTILS_RAM_HPP_
 #define INC_UTILS_RAM_HPP_
 
-#include "utils/utilities.hpp"
 #include <iomanip>
+
+#include "utils/utilities.hpp"
 
 namespace observer::ram {
 

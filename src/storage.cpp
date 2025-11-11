@@ -43,7 +43,7 @@ const std::string GetStorageType(const std::string& device) {
  * @return Storage size of the device
  */
 double GetStorageSizeGB(const std::string& device) {
-    std::cout << std::fixed << std::setprecision(2);
+  std::cout << std::fixed << std::setprecision(2);
   std::ifstream size_file("/sys/block/" + device + "/size");
   unsigned long long sectors = 0;
   size_file >> sectors;
@@ -63,7 +63,8 @@ std::vector<double> GetStorageUsage(const std::string& mountpoint) {
 
   struct statvfs stats;
   if (statvfs(mountpoint.c_str(), &stats) == 0) {
-    double total = static_cast<double>(stats.f_blocks) * stats.f_frsize / (1024.0 * 1024.0 * 1024.0);
+    double total =
+        static_cast<double>(stats.f_blocks) * stats.f_frsize / (1024.0 * 1024.0 * 1024.0);
     double free = static_cast<double>(stats.f_bfree) * stats.f_frsize / (1024.0 * 1024.0 * 1024.0);
     double used = total - free;
     result = {used, free, total};
@@ -129,8 +130,7 @@ std::vector<StorageInfo> ReadAllStorageDevices() {
     if (!best_mountpoint.empty()) {
       info.used_GB = best_used;
       info.free_GB = best_total - best_used;
-      info.used_percent =
-          (best_total > 0) ? (100.0 * best_used / best_total) : 0.0;
+      info.used_percent = (best_total > 0) ? (100.0 * best_used / best_total) : 0.0;
     } else {
       info.used_GB = 0;
       info.free_GB = total_gb;
@@ -141,6 +141,21 @@ std::vector<StorageInfo> ReadAllStorageDevices() {
   }
 
   return storages;
+}
+
+const std::string GetVerboseStorageInfo() {
+  return observer::utilities::GetVerboseInfo("/proc/mounts");
+}
+
+void SaveConfidentialStorageInfo() {
+  std::string document = "/storage_info.txt";
+  std::string file = observer::utilities::SaveConfidentialData(document);
+
+  std::ofstream outfile(file, std::ios::trunc);
+  outfile << GetVerboseStorageInfo();
+  outfile.close();
+
+  observer::utilities::SecureFileOwnership(file);
 }
 
 /**

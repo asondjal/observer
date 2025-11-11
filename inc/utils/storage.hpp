@@ -1,20 +1,21 @@
 #ifndef INC_UTILS_STORAGE_HPP_
 #define INC_UTILS_STORAGE_HPP_
 
-#include <iostream>
-#include <vector>
-#include <iomanip>
-#include <filesystem>
-#include <sstream>
 #include <sys/statvfs.h>
+
+#include <filesystem>
+#include <iomanip>
+#include <iostream>
+#include <sstream>
+#include <vector>
 
 #include "utils/utilities.hpp"
 
 namespace observer::storage {
 struct StorageInfo {
-  std::string device_name;     // z. B. "nvme0n1", "sda"
-  std::string model;           // z. B. "Samsung SSD 990 PRO"
-  std::string type;            // "NVMe", "SSD", "HDD"
+  std::string device_name;
+  std::string model;
+  std::string type;
   double total_GB = 0.0;
   double used_GB = 0.0;
   double free_GB = 0.0;
@@ -28,9 +29,8 @@ std::vector<double> GetStorageUsage(const std::string& mountpoint);
 std::map<std::string, std::string> GetMountpoints();
 std::vector<StorageInfo> ReadAllStorageDevices();
 void ShowAllStorageDevices();
-// const std::string GetVerboseStorageInfo(); Must be implemented and tested 
-// void SaveConfidentialStorageInfo();
-}
+const std::string GetVerboseStorageInfo();
+void SaveConfidentialStorageInfo();
+}  // namespace observer::storage
 
 #endif /* INC_UTILS_STORAGE_HPP_ */
-

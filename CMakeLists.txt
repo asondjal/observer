@@ -58,6 +58,7 @@ add_executable(cpp_tests
     src/read_data.cpp
     src/logging.cpp
     src/utilities.cpp
+    src/cpu.cpp
     src/ram.cpp
     src/storage.cpp
 
@@ -67,6 +68,7 @@ add_executable(cpp_tests
     cpp_tests/test_logging.cpp
     cpp_tests/test_cpu.cpp
     cpp_tests/test_ram.cpp
+    cpp_tests/test_storage.cpp
 )
 
 target_include_directories(cpp_tests PRIVATE ${PROJECT_SOURCE_DIR}/inc)
