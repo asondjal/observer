@@ -2,10 +2,11 @@
 #define INC_UTILS_STORAGE_HPP_
 
 #include <iostream>
-#include <iomanip>
 #include <vector>
+#include <iomanip>
 #include <filesystem>
 #include <sstream>
+#include <sys/statvfs.h>
 
 #include "utils/utilities.hpp"
 
@@ -20,14 +21,15 @@ struct StorageInfo {
   double used_percent = 0.0;
 };
 
-const std::string GetStorageDeviceName();
-const std::string GetStorageModel();
-const std::string GetStorageType();
-std::vector<double> GetStorageUsage();
-StorageInfo ReadStorageInfo();
-void SaveConfidentialStorageData();
-const std::string GetVerboseStorageInfo();
-void DisplayData();
+const std::string GetStorageModel(const std::string& device);
+const std::string GetStorageType(const std::string& device);
+double GetStorageSizeGB(const std::string& device);
+std::vector<double> GetStorageUsage(const std::string& mountpoint);
+std::map<std::string, std::string> GetMountpoints();
+std::vector<StorageInfo> ReadAllStorageDevices();
+void ShowAllStorageDevices();
+// const std::string GetVerboseStorageInfo(); Must be implemented and tested 
+// void SaveConfidentialStorageInfo();
 }
 
 #endif /* INC_UTILS_STORAGE_HPP_ */

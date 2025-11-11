@@ -56,7 +56,7 @@ const std::vector<double> GetAllCPUTemperatures() {
           std::ifstream temp_file(file.path());
           double temp_millideg;
           if (temp_file >> temp_millideg) {
-            std::cout << std::fixed << std::setprecision(4);
+            std::cout << std::fixed << std::setprecision(2);
             temperatures.push_back(temp_millideg / 1000.0);
           }
         }
@@ -128,7 +128,7 @@ const std::vector<double> GetAllCPUFrequencies() {
  */
 void ShowAllCPUFrequencies() {
   std::vector<double> freqs = GetAllCPUFrequencies();
-  std::cout << std::fixed << std::setprecision(4);
+  std::cout << std::fixed << std::setprecision(2);
   for (std::size_t i = 0; i < freqs.size(); i++) {
     std::cout << "Core " << i << ": " << freqs[i] << " MHz" << std::endl;
   }
@@ -136,10 +136,10 @@ void ShowAllCPUFrequencies() {
 
 /**
  * @brief Calculation of the average frequency altogether
- * @return Average frequency with an accuracy of 4 decimals
+ * @return Average frequency with an accuracy of 2 decimals
  */
 double GetAverageCPUFrequency() {
-  std::cout << std::fixed << std::setprecision(4);
+  std::cout << std::fixed << std::setprecision(2);
   std::vector<double> freqs = GetAllCPUFrequencies();
   if (freqs.empty())
     return 0.0;
@@ -155,6 +155,7 @@ double GetAverageCPUFrequency() {
  * @return std::vector<CPUUsage> containing the absolute load for each CPU-core
  */
 std::vector<CPUUsage> ReadCPUStats() {
+    std::cout << std::fixed << std::setprecision(2);
   std::ifstream file("/proc/stat");
   std::string line;
   std::vector<CPUUsage> stats;
@@ -185,7 +186,7 @@ std::vector<CPUUsage> ReadCPUStats() {
  * @return std::vector<double> containing the relative load for each CPU-core
  */
 std::vector<double> GetCPULoadPerCore() {
-  std::cout << std::fixed << std::setprecision(4);
+  std::cout << std::fixed << std::setprecision(2);
   std::vector<CPUUsage> prev = ReadCPUStats();
   std::this_thread::sleep_for(std::chrono::milliseconds(500));
   std::vector<CPUUsage> curr = ReadCPUStats();
@@ -206,7 +207,7 @@ std::vector<double> GetCPULoadPerCore() {
  * @brief Display of current relative load per CPU-core
  */
 void ShowAllLoadsPerCPU() {
-  std::cout << std::fixed << std::setprecision(4);
+  std::cout << std::fixed << std::setprecision(2);
   std::vector<double> load_management = GetCPULoadPerCore();
   for (size_t i = 0; i < load_management.size(); i++) {
     std::cout << i << ". Core: " << load_management[i] << " %" << std::endl;
@@ -218,7 +219,7 @@ void ShowAllLoadsPerCPU() {
  * @return the system-wide CPU idle percentage
  */
 double GetIdlePercentage() {
-  std::cout << std::fixed << std::setprecision(4);
+  std::cout << std::fixed << std::setprecision(2);
   std::ifstream file("/proc/stat");
   std::string line;
   unsigned long long user, nice, system, idle, iowait, irq, softirq, steal;

@@ -2,6 +2,7 @@
 #define INC_UTILS_RAM_HPP_
 
 #include "utils/utilities.hpp"
+#include <iomanip>
 
 namespace observer::ram {
 

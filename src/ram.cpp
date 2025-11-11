@@ -7,6 +7,7 @@ const std::string GetVerboseRAMInfo() {
 }
 
 RAMInfo ReadRAMInfo() {
+  std::cout << std::fixed << std::setprecision(2);
   RAMInfo info;
   std::ifstream meminfo("/proc/meminfo");
   std::string key;

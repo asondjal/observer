@@ -9,6 +9,6 @@ int main() {
   // std::cout << "Interrupts per second: " << observer::cpu::GetInterruptsPerSec() << std::endl;
   // observer::monitoring::ShowRealTimeAsciiUIForCPU();
   // observer::storage::SaveConfidentialStorageData();
-  observer::storage::DisplayData();
+  observer::storage::ShowAllStorageDevices();
   return 0;
 }
