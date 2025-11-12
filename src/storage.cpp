@@ -39,21 +39,6 @@ const std::string GetStorageType(const std::string& device) {
 }
 
 /**
- * @brief Detect the storage size of a physical drive.
- * @return Storage size of the device
- */
-double GetStorageSizeGB(const std::string& device) {
-  std::cout << std::fixed << std::setprecision(2);
-  std::ifstream size_file("/sys/block/" + device + "/size");
-  unsigned long long sectors = 0;
-  size_file >> sectors;
-
-  // Each section contains data of probably 512 byte
-  double bytes = sectors * 512.0;
-  return bytes / (1024.0 * 1024.0 * 1024.0);
-}
-
-/**
  * @brief Read data from the mountpoint.
  */
 std::vector<double> GetStorageUsage(const std::string& mountpoint) {
@@ -73,7 +58,23 @@ std::vector<double> GetStorageUsage(const std::string& mountpoint) {
 }
 
 /**
+ * @brief Detect the storage size of a physical drive.
+ * @return Storage size of the device
+ */
+double GetStorageSizeGB(const std::string& device) {
+  std::cout << std::fixed << std::setprecision(2);
+  std::ifstream size_file("/sys/block/" + device + "/size");
+  unsigned long long sectors = 0;
+  size_file >> sectors;
+
+  // Each section contains data of probably 512 byte
+  double bytes = sectors * 512.0;
+  return bytes / (1024.0 * 1024.0 * 1024.0);
+}
+
+/**
  * @brief Read mountpoints including their corresponding devices.
+ * @return existing mountpoints
  */
 std::map<std::string, std::string> GetMountpoints() {
   std::map<std::string, std::string> mounts;
@@ -88,6 +89,7 @@ std::map<std::string, std::string> GetMountpoints() {
 
 /**
  * @brief Read all existing drive that contain atleast 16 GB of storage
+ * @return Existing storage drives
  */
 std::vector<StorageInfo> ReadAllStorageDevices() {
   std::vector<StorageInfo> storages;
