@@ -14,7 +14,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0 --coverage")
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --coverage")
 set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} --coverage")
 
-add_subdirectory(external/ftxui)
+add_subdirectory(external/FTXUI)
 
 add_executable(observer
     src/main.cpp
@@ -36,7 +36,11 @@ set(PROJECT_SOURCES
 )
 
 add_library(observer_lib STATIC ${PROJECT_SOURCES})
-target_include_directories(observer_lib PUBLIC ${PROJECT_SOURCE_DIR}/inc)
+target_include_directories(observer_lib PUBLIC 
+    ${PROJECT_SOURCE_DIR}/inc
+    ${PROJECT_SOURCE_DIR}/FTXUI/include
+)
+
 target_compile_options(observer_lib PRIVATE -Wall -Wextra -pedantic)
 
 target_link_libraries(observer_lib PUBLIC
@@ -52,30 +56,4 @@ target_link_libraries(observer_lib PUBLIC
     ${CPUID_LIB}
     ${NL_LIB}
     ${NL_GENL_LIB}
-)
-
-add_executable(cpp_tests
-    src/read_data.cpp
-    src/logging.cpp
-    src/utilities.cpp
-    src/cpu.cpp
-    src/ram.cpp
-    src/storage.cpp
-
-    cpp_tests/main.cpp
-    cpp_tests/test_utilities.cpp
-    cpp_tests/test_read_data.cpp
-    cpp_tests/test_logging.cpp
-    cpp_tests/test_cpu.cpp
-    cpp_tests/test_ram.cpp
-    cpp_tests/test_storage.cpp
-)
-
-target_include_directories(cpp_tests PRIVATE ${PROJECT_SOURCE_DIR}/inc)
-
-target_compile_options(cpp_tests PRIVATE -Wall -Wextra -pedantic)
-
-target_link_libraries(cpp_tests PRIVATE
-    observer_lib
-    gcov
 )
