@@ -6,6 +6,7 @@ cmake_install.cmake
 Makefile
 dist/
 .vscode/
+external/
 confidential/
 *.log
 *.tmp
