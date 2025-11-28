@@ -9,32 +9,24 @@ void ShowInitialData() {
   bool running = true;
 
   // Preprocessing of the data
+  std::string current_user = observer::utilities::GetCurrentUser();
   std::string date = observer::utilities::GetSystemTimestamp();
-  std::string cpu_name = observer::cpu::GetCPUModel();
-  auto temps = observer::cpu::GetAllCPUTemperatures();
-  double avg_temp = observer::cpu::GetAverageCPUTemperature();
-
-  // Setup for display of the data
-  std::vector<Element> temp_bars;
-  for (size_t i = 0; i < temps.size(); ++i) {
-    temp_bars.push_back(hbox({text("[" + std::to_string(i) + "] "), gauge(temps[i] / 100.0),
-                              text(" " + std::to_string(temps[i]) + "°C")}));
-  }
 
   Component renderer = Renderer([&] {
     return vbox({
                text("OBSERVER SYSTEM MONITOR") | bold | center | color(Color::DarkOrange),
                separator(),
-               text("Current time: " + date),
+               text("INITIAL STARTING PAGE") | bold | center | color(Color::DarkOrange),
                separator(),
-               text("CPU: " + cpu_name),
+               text("DATE:  " + date) | bold | color(Color::Wheat1),
                separator(),
-               text("Temperatures:"),
-               vbox(temp_bars),
+               text("CURRENT USER: " + current_user) | bold | color(Color::DarkOrange),
                separator(),
-               text("Average Temperature: " + std::to_string(avg_temp) + " °C"),
+               text("OPTIONS: [1] CPU-Monitoring, [2] Storage-Monitoring, [3] Memory-Monitoring" ) | bold | color(Color::Wheat1),
                separator(),
-               text("Press [Q] or [q]") | bold | center | color(Color::DarkOrange),
+               text("SELECT ONE OPTION: [1], [2] or [3]") | bold | color(Color::Wheat1),
+               separator(),
+               text("PRESS [Q] OR [q]") | bold | center | color(Color::DarkOrange),
                separator(),
            }) |
            border;

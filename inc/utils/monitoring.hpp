@@ -7,6 +7,8 @@
 #include <thread>
 
 #include "utils/cpu.hpp"
+#include "utils/ram.hpp"
+#include "utils/storage.hpp"
 
 namespace observer::monitoring {
 void ShowInitialData();
