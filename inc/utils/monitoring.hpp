@@ -12,8 +12,12 @@
 
 namespace observer::monitoring {
 void ShowInitialData();
+void GetUserChoiceFromInitialDataUI(int user_choice);
+// ftxui::Component ObserverMonitorComponent();
 
 void ShowRealTimeAsciiUIForCPU();
+void ShowRealtTimeAsciiUIForRAM();
+void ShowRealTimeAsciiUIForStorage();
 }  // namespace observer::monitoring
 
 #endif /* INC_UTILS_MONITORING_HPP_ */

@@ -9,7 +9,6 @@ namespace observer::ram {
 
 struct RAMInfo {
   double total_MB = 0;
-  double free_MB = 0;
   double available_MB = 0;
   double used_percent = 0;
 };
