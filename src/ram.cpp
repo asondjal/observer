@@ -24,6 +24,7 @@ RAMInfo ReadRAMInfo() {
 
   info.total_MB = total / 1024.0;
   info.available_MB = available / 1024.0;
+  info.used_MB = info.total_MB - info.available_MB;
   info.used_percent = 100.0 * (1.0 - info.available_MB / info.total_MB);
 
   return info;

@@ -8,11 +8,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_C_COMPILER_LAUNCHER ccache)
 set(CMAKE_CXX_COMPILER_LAUNCHER ccache)
 
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O2")
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -O0 -Wall -Wextra -pedantic")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0 --coverage")
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --coverage")
-set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} --coverage")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
 
 add_subdirectory(external/FTXUI)
 
@@ -57,3 +53,28 @@ target_link_libraries(observer_lib PUBLIC
     ${NL_LIB}
     ${NL_GENL_LIB}
 )
+
+
+find_program(CLANG_FORMAT_EXECUTABLE clang-format)
+
+if(CLANG_FORMAT_EXECUTABLE)
+    message(STATUS "Found clang-format: ${CLANG_FORMAT_EXECUTABLE}")
+
+    add_custom_target(
+        format
+        
+        COMMAND ${CMAKE_COMMAND} -E echo "Running clang-format (style=file) on project sources..."
+        
+        COMMAND bash -c "find ${PROJECT_SOURCE_DIR}/src ${PROJECT_SOURCE_DIR}/inc -regex \".*\\.\\(cpp\\|hpp\\)$\" -exec ${CLANG_FORMAT_EXECUTABLE} -style=file -i {} \;"
+        
+        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+        
+        COMMENT "Formatting C++ source files using clang-format."
+        VERBATIM
+    )
+
+    message(STATUS "C++ formatting target 'format' created. Run 'ninja format' to format files.")
+
+else()
+    message(WARNING "clang-format executable not found. The 'format' target will not be available.")
+endif()

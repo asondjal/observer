@@ -4,6 +4,9 @@ using namespace ftxui;
 
 namespace observer::monitoring {
 
+/**
+ * @brief Displays a real-time ASCII UI for CPU monitoring using FTXUI.
+ */
 void ShowRealTimeAsciiUIForCPU() {
   auto screen = ScreenInteractive::Fullscreen();
   std::atomic<bool> running = true;
@@ -42,21 +45,27 @@ void ShowRealTimeAsciiUIForCPU() {
                 text("CPU: " + cpu_name) | bold | color(Color::LightSkyBlue3Bis),
                 separator(),
                 hbox({
-                    text("Core") | bold | size(WIDTH, EQUAL, 8) | color(Color::White),
-                    text("| Temp (°C)") | bold | size(WIDTH, EQUAL, 14) | color(Color::White),
-                    text("| Freq (MHz)") | bold | size(WIDTH, EQUAL, 16) | color(Color::White),
-                    text("| Load (%)") | bold | size(WIDTH, EQUAL, 10) | color(Color::White),
+                    text("Core") | bold | size(WIDTH, EQUAL, 8) | color(Color::LightSkyBlue3Bis),
+                    text("| Temp (°C)") | bold | size(WIDTH, EQUAL, 14) |
+                        color(Color::LightSkyBlue3Bis),
+                    text("| Freq (MHz)") | bold | size(WIDTH, EQUAL, 16) |
+                        color(Color::LightSkyBlue3Bis),
+                    text("| Load (%)") | bold | size(WIDTH, EQUAL, 10) |
+                        color(Color::LightSkyBlue3Bis),
                 }),
                 separator(),
                 vbox(core_rows),
                 separator(),
-                text("Average Temperature: " + std::to_string(avg_temp) + " °C") | bold | color(Color::White),
+                text("Average Temperature: " + std::to_string(avg_temp) + " °C") | bold |
+                    color(Color::White),
                 separator(),
-                text("Average Frequency: " + std::to_string(avg_freq) + " MHz") | bold | color(Color::White),
+                text("Average Frequency: " + std::to_string(avg_freq) + " MHz") | bold |
+                    color(Color::White),
                 separator(),
                 text("Idle: " + std::to_string(idle_percent) + "%") | bold | color(Color::White),
                 separator(),
-                text("Context Switches/s: " + std::to_string(ctx_switches)) | bold | color(Color::White),
+                text("Context Switches/s: " + std::to_string(ctx_switches)) | bold |
+                    color(Color::White),
                 separator(),
                 text("Interrupts/s: " + std::to_string(interrupts)) | bold | color(Color::White),
                 separator(),
@@ -98,6 +107,9 @@ void ShowRealTimeAsciiUIForCPU() {
   updater.join();
 }
 
+/**
+ * @brief Displays a real-time ASCII UI for RAM monitoring using FTXUI.
+ */
 void ShowRealtTimeAsciiUIForRAM() {
   auto screen = ScreenInteractive::Fullscreen();
   std::atomic<bool> running = true;
@@ -107,17 +119,22 @@ void ShowRealtTimeAsciiUIForRAM() {
   double total_ram = 0.0000;
   double available_ram = 0.0000;
   double used_ram = 0.0000;
+  double used_percent = 0.0000;
 
-    Component renderer = Renderer([&] {
-
+  Component renderer = Renderer([&] {
     return vbox(
                {text("=== OBSERVER: RAM-MONITORING ===") | bold | center | color(Color::DarkOrange),
                 separator(),
-                text("Total memory: " + std::to_string(total_ram) + " MB") | bold | color(Color::White),
+                text("Total memory: " + std::to_string(total_ram) + " MB") | bold |
+                    color(Color::White),
                 separator(),
-                text("Available memory: " + std::to_string(available_ram) + " MB") | bold | color(Color::White),
+                text("Available memory: " + std::to_string(available_ram) + " MB") | bold |
+                    color(Color::White),
                 separator(),
-                text("Used memory: " + std::to_string(used_ram) + " %") | bold | color(Color::White),
+                text("Used memory: " + std::to_string(used_ram) + " MB") | bold |
+                    color(Color::White),
+                separator(),
+                text("Load: " + std::to_string(used_percent) + " %") | bold | color(Color::White),
                 separator(),
                 text("Observation started: " + date) | bold | color(Color::LightSkyBlue3Bis),
                 separator(),
@@ -133,7 +150,8 @@ void ShowRealtTimeAsciiUIForRAM() {
       observer::ram::RAMInfo current_state = observer::ram::ReadRAMInfo();
       total_ram = current_state.total_MB;
       available_ram = current_state.available_MB;
-      used_ram = current_state.used_percent;
+      used_ram = current_state.used_MB;
+      used_percent = current_state.used_percent;
       screen.PostEvent(Event::Custom);
       std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     }
@@ -151,40 +169,65 @@ void ShowRealtTimeAsciiUIForRAM() {
 
   screen.Loop(renderer);
   updater.join();
-
 }
 
+/**
+ * @brief Displays a real-time ASCII UI for Storage monitoring using FTXUI.
+ */
 void ShowRealTimeAsciiUIForStorage() {
   auto screen = ScreenInteractive::Fullscreen();
   std::atomic<bool> running = true;
   std::string date = observer::utilities::GetSystemTimestamp();
   std::string current_user = observer::utilities::GetCurrentUser();
-
-  std::string device_name;
-  std::string model;
-  std::string type;
-  double total_GB = 0.0;
-  double used_GB = 0.0;
-  double free_GB = 0.0;
-  double used_percent = 0.0;
-
   std::vector<observer::storage::StorageInfo> storages = observer::storage::ReadAllStorageDevices();
+
   Component renderer = Renderer([&] {
-    //   for (size_t i = 0; i < storages.size(); ++i) {
-    //   storages.push_back(hbox({
-    //       text("Core " + std::to_string(i)) | size(WIDTH, EQUAL, 8) | color(Color::White),
-    //       separator(),
-    //       text(std::to_string(temps[i]) + " °C") | size(WIDTH, EQUAL, 14) | color(Color::White),
-    //       separator(),
-    //       text(std::to_string(freqs[i]) + " MHz") | size(WIDTH, EQUAL, 16) | color(Color::White),
-    //       separator(),
-    //       text(std::to_string(loads[i]) + " %") | size(WIDTH, EQUAL, 10) | color(Color::White),
-    //   }));
-    // }
+    std::vector<Element> device_rows;
+    for (size_t i = 0; i < storages.size(); i++) {
+      device_rows.push_back(hbox({
+          text(std::to_string(i + 1)) | size(WIDTH, EQUAL, 8) | color(Color::White),
+          separator(),
+          text(" " + storages[i].device_name) | size(WIDTH, EQUAL, 14) | color(Color::White),
+          separator(),
+          text(" " + storages[i].model) | size(WIDTH, EQUAL, 26) | color(Color::White),
+          separator(),
+          text(" " + storages[i].type) | size(WIDTH, EQUAL, 12) | color(Color::White),
+          separator(),
+          text(" " + std::to_string(storages[i].total_GB)) | size(WIDTH, EQUAL, 16) |
+              color(Color::White),
+          separator(),
+          text(" " + std::to_string(storages[i].used_GB)) | size(WIDTH, EQUAL, 18) |
+              color(Color::White),
+          separator(),
+          text(" " + std::to_string(storages[i].free_GB)) | size(WIDTH, EQUAL, 18) |
+              color(Color::White),
+          separator(),
+          text(" " + std::to_string(storages[i].used_percent)) | size(WIDTH, EQUAL, 18) |
+              color(Color::White),
+          separator(),
+      }));
+    }
 
     return vbox(
-               {text("=== OBSERVER: STORAGE-MONITORING ===") | bold | center | color(Color::DarkOrange),
+               {text("=== OBSERVER: STORAGE-MONITORING ===") | bold | center |
+                    color(Color::DarkOrange),
                 separator(),
+                hbox({
+                    text("Device") | bold | size(WIDTH, EQUAL, 8) | color(Color::LightSkyBlue3Bis),
+                    text("| Name") | bold | size(WIDTH, EQUAL, 15) | color(Color::LightSkyBlue3Bis),
+                    text("| Model ") | bold | size(WIDTH, EQUAL, 27) |
+                        color(Color::LightSkyBlue3Bis),
+                    text("| Type") | bold | size(WIDTH, EQUAL, 13) | color(Color::LightSkyBlue3Bis),
+                    text("| Total (GB)") | bold | size(WIDTH, EQUAL, 17) |
+                        color(Color::LightSkyBlue3Bis),
+                    text("| Used (GB)") | bold | size(WIDTH, EQUAL, 19) |
+                        color(Color::LightSkyBlue3Bis),
+                    text("| Free (GB)") | bold | size(WIDTH, EQUAL, 19) |
+                        color(Color::LightSkyBlue3Bis),
+                    text("| Load (%)") | bold | size(WIDTH, EQUAL, 12) |
+                        color(Color::LightSkyBlue3Bis),
+                }),
+                vbox(device_rows), separator(),
                 text("Observation started: " + date) | bold | color(Color::LightSkyBlue3Bis),
                 separator(),
                 text("Current user: " + current_user) | bold | color(Color::LightSkyBlue3Bis),
@@ -192,7 +235,17 @@ void ShowRealTimeAsciiUIForStorage() {
                 text("EXIT: Press [Q] or [q]") | bold | center | color(Color::DarkOrange)}) |
            borderLight;
   });
-    // Terminate the process
+
+  // Background-thread for live-updates
+  std::thread updater([&] {
+    while (running) {
+      storages = observer::storage::ReadAllStorageDevices();
+      screen.PostEvent(Event::Custom);
+      std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+    }
+  });
+
+  // Terminate the process
   renderer |= CatchEvent([&](Event event) {
     if (event == Event::Character('q') || event == Event::Character('Q')) {
       running = false;
@@ -203,26 +256,33 @@ void ShowRealTimeAsciiUIForStorage() {
   });
 
   screen.Loop(renderer);
-
+  updater.join();
 }
 
+/**
+ * @brief Gets user choice from the initial data UI and triggers corresponding monitoring UI.
+ * @param user_choice user's choice represented as an integer.
+ */
 void GetUserChoiceFromInitialDataUI(int user_choice) {
-  switch(user_choice) {
+  switch (user_choice) {
     case 1:
-    observer::monitoring::ShowRealTimeAsciiUIForCPU();
-    break;
+      observer::monitoring::ShowRealTimeAsciiUIForCPU();
+      break;
     case 2:
-    observer::monitoring::ShowRealtTimeAsciiUIForRAM();
-    break;
+      observer::monitoring::ShowRealtTimeAsciiUIForRAM();
+      break;
     case 3:
-    observer::monitoring::ShowRealTimeAsciiUIForStorage();
-    break;
+      observer::monitoring::ShowRealTimeAsciiUIForStorage();
+      break;
     default:
-    std::cout << "User didn't insert an option!" << std::endl;
+      std::cout << "User didn't select an option!" << std::endl;
   }
 }
 
-void ShowInitialData() {
+/**
+ * @brief Starting menu displayed at the launch of the application.
+ */
+void StartingMenu() {
   auto screen = ScreenInteractive::Fullscreen();
   bool running = true;
 
@@ -240,7 +300,9 @@ void ShowInitialData() {
                separator(),
                text("CURRENT USER: " + current_user) | bold | color(Color::DarkOrange),
                separator(),
-               text("OPTIONS: [1] CPU-Monitoring, [2] Storage-Monitoring, [3] Memory-Monitoring" ) | bold | color(Color::White),
+               text("SELECTABLE OPTIONS: [1] CPU-MONITORING, [2] STORAGE-MONITORING, [3] "
+                    "MEMORY-MONITORING") |
+                   bold | color(Color::White),
                separator(),
                text("SELECT ONE OPTION: [1], [2] or [3]") | bold | color(Color::IndianRed1),
                separator(),
