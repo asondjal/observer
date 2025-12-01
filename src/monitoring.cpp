@@ -7,7 +7,7 @@ namespace observer::monitoring {
 /**
  * @brief Displays a real-time ASCII UI for CPU monitoring using FTXUI.
  */
-void ShowRealTimeAsciiUIForCPU() {
+void ShowRealTimeMaximumAsciiUIForCPU() {
   auto screen = ScreenInteractive::Fullscreen();
   std::atomic<bool> running = true;
 
@@ -110,7 +110,7 @@ void ShowRealTimeAsciiUIForCPU() {
 /**
  * @brief Displays a real-time ASCII UI for RAM monitoring using FTXUI.
  */
-void ShowRealtTimeAsciiUIForRAM() {
+void ShowRealtTimeMaximumAsciiUIForRAM() {
   auto screen = ScreenInteractive::Fullscreen();
   std::atomic<bool> running = true;
   std::string date = observer::utilities::GetSystemTimestamp();
@@ -174,7 +174,7 @@ void ShowRealtTimeAsciiUIForRAM() {
 /**
  * @brief Displays a real-time ASCII UI for Storage monitoring using FTXUI.
  */
-void ShowRealTimeAsciiUIForStorage() {
+void ShowRealTimeMaximumAsciiUIForStorage() {
   auto screen = ScreenInteractive::Fullscreen();
   std::atomic<bool> running = true;
   std::string date = observer::utilities::GetSystemTimestamp();
@@ -232,6 +232,9 @@ void ShowRealTimeAsciiUIForStorage() {
                 separator(),
                 text("Current user: " + current_user) | bold | color(Color::LightSkyBlue3Bis),
                 separator(),
+                text("RETURN TO STARTING MENU: Press [R] or [r]") | bold | center |
+                    color(Color::DarkOrange),
+                separator(), 
                 text("EXIT: Press [Q] or [q]") | bold | center | color(Color::DarkOrange)}) |
            borderLight;
   });
@@ -252,6 +255,13 @@ void ShowRealTimeAsciiUIForStorage() {
       screen.ExitLoopClosure()();  // Close the screen
       return true;
     }
+
+    if (event == Event::Character('r') || event == Event::Character('R')) {
+      running = false; // 1. Beendet den Hintergrund-Updater-Thread
+      screen.ExitLoopClosure()();  // 2. Schließt die aktuelle Monitoring-UI
+      return true;
+    }
+
     return false;
   });
 
@@ -266,13 +276,13 @@ void ShowRealTimeAsciiUIForStorage() {
 void GetUserChoiceFromInitialDataUI(int user_choice) {
   switch (user_choice) {
     case 1:
-      observer::monitoring::ShowRealTimeAsciiUIForCPU();
+      observer::monitoring::ShowRealTimeMaximumAsciiUIForCPU();
       break;
     case 2:
-      observer::monitoring::ShowRealtTimeAsciiUIForRAM();
+      observer::monitoring::ShowRealTimeMaximumAsciiUIForStorage();
       break;
     case 3:
-      observer::monitoring::ShowRealTimeAsciiUIForStorage();
+      observer::monitoring::ShowRealtTimeMaximumAsciiUIForRAM();
       break;
     default:
       std::cout << "User didn't select an option!" << std::endl;
@@ -284,7 +294,6 @@ void GetUserChoiceFromInitialDataUI(int user_choice) {
  */
 void StartingMenu() {
   auto screen = ScreenInteractive::Fullscreen();
-  bool running = true;
 
   // Preprocessing of the data
   std::string current_user = observer::utilities::GetCurrentUser();
@@ -304,9 +313,7 @@ void StartingMenu() {
                     "MEMORY-MONITORING") |
                    bold | color(Color::White),
                separator(),
-               text("SELECT ONE OPTION: [1], [2] or [3]") | bold | color(Color::IndianRed1),
-               separator(),
-               text("PRESS [Q] OR [q]") | bold | center | color(Color::DarkOrange),
+               text("EXIT: PRESS [Q] OR [q]") | bold | center | color(Color::DarkOrange),
                separator(),
            }) |
            border;
@@ -314,15 +321,30 @@ void StartingMenu() {
 
   // Terminate the process
   renderer |= CatchEvent([&](Event event) {
-    if (event == Event::Character('q') || event == Event::Character('Q')) {
-      running = false;
-      screen.ExitLoopClosure()();  // Close the screen
+    int selected_option = 0;
+
+        if (event == Event::Character('1')) {
+            selected_option = 1;
+        } else if (event == Event::Character('2')) {
+            selected_option = 2;
+        } else if (event == Event::Character('3')) {
+            selected_option = 3;
+        }
+
+        if (selected_option != 0) {
+            GetUserChoiceFromInitialDataUI(selected_option);
+
+            screen.ExitLoopClosure()(); 
+            return true;
+        }
+          if (event == Event::Character('q') || event == Event::Character('Q')) {
+      screen.ExitLoopClosure()();
       return true;
-    }
+          }
+    
     return false;
   });
 
   screen.Loop(renderer);
 }
-
 }  // namespace observer::monitoring
