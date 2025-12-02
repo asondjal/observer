@@ -15,7 +15,7 @@ namespace observer::app {
 
 void RunObserverApp();
 void GetUserChoiceFromInitialDataUI(int user_choice);
-void MenuSetUp();
+void Launch();
 }  // namespace observer::app
 
 #endif /* INC_UTILS_APP_HPP_ */

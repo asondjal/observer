@@ -2,7 +2,6 @@
 #include "utils/monitoring.hpp"
 
 int main() {
-
-  observer::app::MenuSetUp();
+  observer::app::Launch();
   return 0;
 }

@@ -13,6 +13,8 @@ void RunObserverApp() { observer::monitoring::OptionDetectionForStartingMenu(); 
  */
 void GetUserChoiceFromInitialDataUI(int user_choice) {
   switch (user_choice) {
+    case 0:
+    
     case 1:
       observer::monitoring::ShowRealTimeMaximumAsciiUIForCPU();
       break;
@@ -30,7 +32,7 @@ void GetUserChoiceFromInitialDataUI(int user_choice) {
 /**
  * @brief Sets up the menu for the Observer application.
  */
-void MenuSetUp() {
+void Launch() {
   int choice = observer::monitoring::OptionDetectionForStartingMenu();
   GetUserChoiceFromInitialDataUI(choice);
 }

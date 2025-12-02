@@ -12,7 +12,6 @@
 
 namespace observer::monitoring {
 int OptionDetectionForStartingMenu();
-
 void ShowRealTimeMaximumAsciiUIForCPU();
 void ShowRealtTimeMaximumAsciiUIForRAM();
 void ShowRealTimeMaximumAsciiUIForStorage();

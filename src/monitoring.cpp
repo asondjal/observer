@@ -5,6 +5,73 @@ using namespace ftxui;
 namespace observer::monitoring {
 
 /**
+ * @brief Starting menu displayed at the launch of the application.
+ * @return int representing the user's selected option.
+ */
+int OptionDetectionForStartingMenu() {
+  auto screen = ScreenInteractive::Fullscreen();
+
+  // Preprocessing of the data
+  std::string current_user = observer::utilities::GetCurrentUser();
+  std::string date = observer::utilities::GetSystemTimestamp();
+
+  Component renderer = Renderer([&] {
+    return vbox({
+               text("OBSERVER SYSTEM MONITOR") | bold | center | color(Color::DarkOrange),
+               separator(),
+               text("INITIAL STARTING PAGE") | bold | center | color(Color::DarkOrange),
+               separator(),
+               text("DATE:  " + date) | bold | color(Color::White),
+               separator(),
+               text("CURRENT USER: " + current_user) | bold | color(Color::DarkOrange),
+               separator(),
+               text("SELECTABLE OPTIONS: [1] CPU-MONITORING, [2] STORAGE-MONITORING, [3] "
+                    "MEMORY-MONITORING") |
+                   bold | color(Color::White),
+               separator(),
+               text("EXIT: PRESS [Q] OR [q]") | bold | center | color(Color::DarkOrange),
+               separator(),
+           }) |
+           border;
+  });
+
+  // Terminate the process
+  int selected_option = 0;
+  renderer |= CatchEvent([&](Event event) {
+    if (event == Event::Character('1')) {
+      selected_option = 1;
+      screen.ExitLoopClosure()();
+      return true;
+    }
+    else if (event == Event::Character('2')) {
+      selected_option = 2;
+      screen.ExitLoopClosure()();
+      return true;
+    }
+    else if (event == Event::Character('3')) {
+      selected_option = 3;
+      screen.ExitLoopClosure()();
+      return true;
+    }
+    else if (event == Event::Character('q') || event == Event::Character('Q')) {
+      selected_option = 0;
+      screen.ExitLoopClosure()();
+      return true;
+    }
+
+    else if (event == Event::Character('r') || event == Event::Character('R')) {
+      selected_option = 0;
+      screen.ExitLoopClosure()();
+      return true;
+    }
+    return false;
+  });
+
+  screen.Loop(renderer);
+  return selected_option;
+}
+
+/**
  * @brief Displays a real-time ASCII UI for CPU monitoring using FTXUI.
  */
 void ShowRealTimeMaximumAsciiUIForCPU() {
@@ -257,8 +324,8 @@ void ShowRealTimeMaximumAsciiUIForStorage() {
     }
 
     if (event == Event::Character('r') || event == Event::Character('R')) {
-      running = false;             // 1. Beendet den Hintergrund-Updater-Thread
-      screen.ExitLoopClosure()();  // 2. Schließt die aktuelle Monitoring-UI
+      running = false;
+      screen.ExitLoopClosure()();  // Close the screen
       return true;
     }
 
@@ -267,65 +334,5 @@ void ShowRealTimeMaximumAsciiUIForStorage() {
 
   screen.Loop(renderer);
   updater.join();
-}
-
-/**
- * @brief Starting menu displayed at the launch of the application.
- */
-int OptionDetectionForStartingMenu() {
-  auto screen = ScreenInteractive::Fullscreen();
-
-  // Preprocessing of the data
-  std::string current_user = observer::utilities::GetCurrentUser();
-  std::string date = observer::utilities::GetSystemTimestamp();
-
-  Component renderer = Renderer([&] {
-    return vbox({
-               text("OBSERVER SYSTEM MONITOR") | bold | center | color(Color::DarkOrange),
-               separator(),
-               text("INITIAL STARTING PAGE") | bold | center | color(Color::DarkOrange),
-               separator(),
-               text("DATE:  " + date) | bold | color(Color::White),
-               separator(),
-               text("CURRENT USER: " + current_user) | bold | color(Color::DarkOrange),
-               separator(),
-               text("SELECTABLE OPTIONS: [1] CPU-MONITORING, [2] STORAGE-MONITORING, [3] "
-                    "MEMORY-MONITORING") |
-                   bold | color(Color::White),
-               separator(),
-               text("EXIT: PRESS [Q] OR [q]") | bold | center | color(Color::DarkOrange),
-               separator(),
-           }) |
-           border;
-  });
-
-  // Terminate the process
-  int selected_option = 0;
-  renderer |= CatchEvent([&](Event event) {
-    if (event == Event::Character('1')) {
-      selected_option = 1;
-      screen.ExitLoopClosure()();
-      return true;
-    }
-    if (event == Event::Character('2')) {
-      selected_option = 2;
-      screen.ExitLoopClosure()();
-      return true;
-    }
-    if (event == Event::Character('3')) {
-      selected_option = 3;
-      screen.ExitLoopClosure()();
-      return true;
-    }
-    if (event == Event::Character('q') || event == Event::Character('Q')) {
-      selected_option = 0;
-      screen.ExitLoopClosure()();
-      return true;
-    }
-    return false;
-  });
-
-  screen.Loop(renderer);
-  return selected_option;
 }
 }  // namespace observer::monitoring
