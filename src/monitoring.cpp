@@ -46,9 +46,9 @@ void ShowRealTimeMaximumAsciiUIForCPU() {
                 separator(),
                 hbox({
                     text("Core") | bold | size(WIDTH, EQUAL, 8) | color(Color::LightSkyBlue3Bis),
-                    text("| Temp (°C)") | bold | size(WIDTH, EQUAL, 14) |
+                    text("| Temp (°C)") | bold | size(WIDTH, EQUAL, 15) |
                         color(Color::LightSkyBlue3Bis),
-                    text("| Freq (MHz)") | bold | size(WIDTH, EQUAL, 16) |
+                    text("| Freq (MHz)") | bold | size(WIDTH, EQUAL, 17) |
                         color(Color::LightSkyBlue3Bis),
                     text("| Load (%)") | bold | size(WIDTH, EQUAL, 10) |
                         color(Color::LightSkyBlue3Bis),
@@ -227,14 +227,14 @@ void ShowRealTimeMaximumAsciiUIForStorage() {
                     text("| Load (%)") | bold | size(WIDTH, EQUAL, 12) |
                         color(Color::LightSkyBlue3Bis),
                 }),
-                vbox(device_rows), separator(),
+                separator(), vbox(device_rows), separator(),
                 text("Observation started: " + date) | bold | color(Color::LightSkyBlue3Bis),
                 separator(),
                 text("Current user: " + current_user) | bold | color(Color::LightSkyBlue3Bis),
                 separator(),
                 text("RETURN TO STARTING MENU: Press [R] or [r]") | bold | center |
                     color(Color::DarkOrange),
-                separator(), 
+                separator(),
                 text("EXIT: Press [Q] or [q]") | bold | center | color(Color::DarkOrange)}) |
            borderLight;
   });
@@ -257,7 +257,7 @@ void ShowRealTimeMaximumAsciiUIForStorage() {
     }
 
     if (event == Event::Character('r') || event == Event::Character('R')) {
-      running = false; // 1. Beendet den Hintergrund-Updater-Thread
+      running = false;             // 1. Beendet den Hintergrund-Updater-Thread
       screen.ExitLoopClosure()();  // 2. Schließt die aktuelle Monitoring-UI
       return true;
     }
@@ -270,29 +270,9 @@ void ShowRealTimeMaximumAsciiUIForStorage() {
 }
 
 /**
- * @brief Gets user choice from the initial data UI and triggers corresponding monitoring UI.
- * @param user_choice user's choice represented as an integer.
- */
-void GetUserChoiceFromInitialDataUI(int user_choice) {
-  switch (user_choice) {
-    case 1:
-      observer::monitoring::ShowRealTimeMaximumAsciiUIForCPU();
-      break;
-    case 2:
-      observer::monitoring::ShowRealTimeMaximumAsciiUIForStorage();
-      break;
-    case 3:
-      observer::monitoring::ShowRealtTimeMaximumAsciiUIForRAM();
-      break;
-    default:
-      std::cout << "User didn't select an option!" << std::endl;
-  }
-}
-
-/**
  * @brief Starting menu displayed at the launch of the application.
  */
-void StartingMenu() {
+int OptionDetectionForStartingMenu() {
   auto screen = ScreenInteractive::Fullscreen();
 
   // Preprocessing of the data
@@ -320,31 +300,32 @@ void StartingMenu() {
   });
 
   // Terminate the process
+  int selected_option = 0;
   renderer |= CatchEvent([&](Event event) {
-    int selected_option = 0;
-
-        if (event == Event::Character('1')) {
-            selected_option = 1;
-        } else if (event == Event::Character('2')) {
-            selected_option = 2;
-        } else if (event == Event::Character('3')) {
-            selected_option = 3;
-        }
-
-        if (selected_option != 0) {
-            GetUserChoiceFromInitialDataUI(selected_option);
-
-            screen.ExitLoopClosure()(); 
-            return true;
-        }
-          if (event == Event::Character('q') || event == Event::Character('Q')) {
+    if (event == Event::Character('1')) {
+      selected_option = 1;
       screen.ExitLoopClosure()();
       return true;
-          }
-    
+    }
+    if (event == Event::Character('2')) {
+      selected_option = 2;
+      screen.ExitLoopClosure()();
+      return true;
+    }
+    if (event == Event::Character('3')) {
+      selected_option = 3;
+      screen.ExitLoopClosure()();
+      return true;
+    }
+    if (event == Event::Character('q') || event == Event::Character('Q')) {
+      selected_option = 0;
+      screen.ExitLoopClosure()();
+      return true;
+    }
     return false;
   });
 
   screen.Loop(renderer);
+  return selected_option;
 }
 }  // namespace observer::monitoring

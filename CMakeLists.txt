@@ -29,6 +29,7 @@ set(PROJECT_SOURCES
     src/monitoring.cpp
     src/ram.cpp
     src/storage.cpp
+    src/app.cpp
 )
 
 add_library(observer_lib STATIC ${PROJECT_SOURCES})

@@ -11,9 +11,7 @@
 #include "utils/storage.hpp"
 
 namespace observer::monitoring {
-void StartingMenu();
-void GetUserChoiceFromInitialDataUI(int user_choice);
-// ftxui::Component ObserverMonitorComponent();
+int OptionDetectionForStartingMenu();
 
 void ShowRealTimeMaximumAsciiUIForCPU();
 void ShowRealtTimeMaximumAsciiUIForRAM();
