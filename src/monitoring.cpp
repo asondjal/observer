@@ -4,72 +4,7 @@ using namespace ftxui;
 
 namespace observer::monitoring {
 
-/**
- * @brief Starting menu displayed at the launch of the application.
- * @return int representing the user's selected option.
- */
-int OptionDetectionForStartingMenu() {
-  auto screen = ScreenInteractive::Fullscreen();
-
-  // Preprocessing of the data
-  std::string current_user = observer::utilities::GetCurrentUser();
-  std::string date = observer::utilities::GetSystemTimestamp();
-
-  Component renderer = Renderer([&] {
-    return vbox({
-               text("OBSERVER SYSTEM MONITOR") | bold | center | color(Color::DarkOrange),
-               separator(),
-               text("INITIAL STARTING PAGE") | bold | center | color(Color::DarkOrange),
-               separator(),
-               text("DATE:  " + date) | bold | color(Color::White),
-               separator(),
-               text("CURRENT USER: " + current_user) | bold | color(Color::DarkOrange),
-               separator(),
-               text("SELECTABLE OPTIONS: [1] CPU-MONITORING, [2] STORAGE-MONITORING, [3] "
-                    "MEMORY-MONITORING") |
-                   bold | color(Color::White),
-               separator(),
-               text("EXIT: PRESS [Q] OR [q]") | bold | center | color(Color::DarkOrange),
-               separator(),
-           }) |
-           border;
-  });
-
-  // Terminate the process
-  int selected_option = 0;
-  renderer |= CatchEvent([&](Event event) {
-    if (event == Event::Character('1')) {
-      selected_option = 1;
-      screen.ExitLoopClosure()();
-      return true;
-    }
-    else if (event == Event::Character('2')) {
-      selected_option = 2;
-      screen.ExitLoopClosure()();
-      return true;
-    }
-    else if (event == Event::Character('3')) {
-      selected_option = 3;
-      screen.ExitLoopClosure()();
-      return true;
-    }
-    else if (event == Event::Character('q') || event == Event::Character('Q')) {
-      selected_option = 0;
-      screen.ExitLoopClosure()();
-      return true;
-    }
-
-    else if (event == Event::Character('r') || event == Event::Character('R')) {
-      selected_option = 0;
-      screen.ExitLoopClosure()();
-      return true;
-    }
-    return false;
-  });
-
-  screen.Loop(renderer);
-  return selected_option;
-}
+void MinimumRealTimeAsciiUIForCPU() {}
 
 /**
  * @brief Displays a real-time ASCII UI for CPU monitoring using FTXUI.
@@ -106,41 +41,45 @@ void ShowRealTimeMaximumAsciiUIForCPU() {
       }));
     }
 
-    return vbox(
-               {text("=== OBSERVER: CPU MONITORING ===") | bold | center | color(Color::DarkOrange),
-                separator(),
-                text("CPU: " + cpu_name) | bold | color(Color::LightSkyBlue3Bis),
-                separator(),
-                hbox({
-                    text("Core") | bold | size(WIDTH, EQUAL, 8) | color(Color::LightSkyBlue3Bis),
-                    text("| Temp (°C)") | bold | size(WIDTH, EQUAL, 15) |
-                        color(Color::LightSkyBlue3Bis),
-                    text("| Freq (MHz)") | bold | size(WIDTH, EQUAL, 17) |
-                        color(Color::LightSkyBlue3Bis),
-                    text("| Load (%)") | bold | size(WIDTH, EQUAL, 10) |
-                        color(Color::LightSkyBlue3Bis),
-                }),
-                separator(),
-                vbox(core_rows),
-                separator(),
-                text("Average Temperature: " + std::to_string(avg_temp) + " °C") | bold |
-                    color(Color::White),
-                separator(),
-                text("Average Frequency: " + std::to_string(avg_freq) + " MHz") | bold |
-                    color(Color::White),
-                separator(),
-                text("Idle: " + std::to_string(idle_percent) + "%") | bold | color(Color::White),
-                separator(),
-                text("Context Switches/s: " + std::to_string(ctx_switches)) | bold |
-                    color(Color::White),
-                separator(),
-                text("Interrupts/s: " + std::to_string(interrupts)) | bold | color(Color::White),
-                separator(),
-                text("Observation started: " + date) | bold | color(Color::LightSkyBlue3Bis),
-                separator(),
-                text("Current user: " + current_user) | bold | color(Color::LightSkyBlue3Bis),
-                separator(),
-                text("EXIT: Press [Q] or [q]") | bold | center | color(Color::DarkOrange)}) |
+    return vbox({text("=== OBSERVER: CPU-MONITORING ===") | bold | center | italic |
+                     color(Color::DarkOrange),
+                 separator(),
+                 text("CPU: " + cpu_name) | bold | color(Color::LightSkyBlue3Bis),
+                 separator(),
+                 hbox({
+                     text("Core") | bold | size(WIDTH, EQUAL, 8) | color(Color::LightSkyBlue3Bis),
+                     text("| Temp (°C)") | bold | size(WIDTH, EQUAL, 15) |
+                         color(Color::LightSkyBlue3Bis),
+                     text("| Freq (MHz)") | bold | size(WIDTH, EQUAL, 17) |
+                         color(Color::LightSkyBlue3Bis),
+                     text("| Load (%)") | bold | size(WIDTH, EQUAL, 10) |
+                         color(Color::LightSkyBlue3Bis),
+                 }),
+                 separator(),
+                 vbox(core_rows),
+                 separator(),
+                 text("Average Temperature: " + std::to_string(avg_temp) + " °C") | bold |
+                     color(Color::White),
+                 separator(),
+                 text("Average Frequency: " + std::to_string(avg_freq) + " MHz") | bold |
+                     color(Color::White),
+                 separator(),
+                 text("Idle: " + std::to_string(idle_percent) + "%") | bold | color(Color::White),
+                 separator(),
+                 text("Context Switches/s: " + std::to_string(ctx_switches)) | bold |
+                     color(Color::White),
+                 separator(),
+                 text("Interrupts/s: " + std::to_string(interrupts)) | bold | color(Color::White),
+                 separator(),
+                 text("Observation started: " + date) | bold | color(Color::LightSkyBlue3Bis),
+                 separator(),
+                 text("Current user: " + current_user) | bold | color(Color::LightSkyBlue3Bis),
+                 separator(),
+                 text("=== RETURN TO STARTING MENU: Press [R] or [r] ===") | bold | center |
+                     italic | color(Color::DarkOrange),
+                 separator(),
+                 text("=== EXIT: Press [Q] or [q] ===") | bold | center | italic |
+                     color(Color::DarkOrange)}) |
            borderLight;
   });
 
@@ -167,6 +106,13 @@ void ShowRealTimeMaximumAsciiUIForCPU() {
       screen.ExitLoopClosure()();
       return true;
     }
+
+    if (event == Event::Character('r') || event == Event::Character('R')) {
+      running = false;
+      screen.ExitLoopClosure()();  // Close the screen
+      OptionDetectionForStartingMenu();
+      return true;
+    }
     return false;
   });
 
@@ -189,25 +135,29 @@ void ShowRealtTimeMaximumAsciiUIForRAM() {
   double used_percent = 0.0000;
 
   Component renderer = Renderer([&] {
-    return vbox(
-               {text("=== OBSERVER: RAM-MONITORING ===") | bold | center | color(Color::DarkOrange),
-                separator(),
-                text("Total memory: " + std::to_string(total_ram) + " MB") | bold |
-                    color(Color::White),
-                separator(),
-                text("Available memory: " + std::to_string(available_ram) + " MB") | bold |
-                    color(Color::White),
-                separator(),
-                text("Used memory: " + std::to_string(used_ram) + " MB") | bold |
-                    color(Color::White),
-                separator(),
-                text("Load: " + std::to_string(used_percent) + " %") | bold | color(Color::White),
-                separator(),
-                text("Observation started: " + date) | bold | color(Color::LightSkyBlue3Bis),
-                separator(),
-                text("Current user: " + current_user) | bold | color(Color::LightSkyBlue3Bis),
-                separator(),
-                text("EXIT: Press [Q] or [q]") | bold | center | color(Color::DarkOrange)}) |
+    return vbox({text("=== OBSERVER: MEMORY-MONITORING ===") | bold | center | italic |
+                     color(Color::DarkOrange),
+                 separator(),
+                 text("Total memory: " + std::to_string(total_ram) + " MB") | bold |
+                     color(Color::White),
+                 separator(),
+                 text("Available memory: " + std::to_string(available_ram) + " MB") | bold |
+                     color(Color::White),
+                 separator(),
+                 text("Used memory: " + std::to_string(used_ram) + " MB") | bold |
+                     color(Color::White),
+                 separator(),
+                 text("Load: " + std::to_string(used_percent) + " %") | bold | color(Color::White),
+                 separator(),
+                 text("Observation started: " + date) | bold | color(Color::LightSkyBlue3Bis),
+                 separator(),
+                 text("Current user: " + current_user) | bold | color(Color::LightSkyBlue3Bis),
+                 separator(),
+                 text("=== RETURN TO STARTING MENU: Press [R] or [r] ===") | bold | center |
+                     italic | color(Color::DarkOrange),
+                 separator(),
+                 text("=== EXIT: Press [Q] or [q] ===") | bold | center | italic |
+                     color(Color::DarkOrange)}) |
            borderLight;
   });
 
@@ -229,6 +179,13 @@ void ShowRealtTimeMaximumAsciiUIForRAM() {
     if (event == Event::Character('q') || event == Event::Character('Q')) {
       running = false;
       screen.ExitLoopClosure()();
+      return true;
+    }
+
+    if (event == Event::Character('r') || event == Event::Character('R')) {
+      running = false;
+      screen.ExitLoopClosure()();  // Close the screen
+      OptionDetectionForStartingMenu();
       return true;
     }
     return false;
@@ -276,7 +233,7 @@ void ShowRealTimeMaximumAsciiUIForStorage() {
     }
 
     return vbox(
-               {text("=== OBSERVER: STORAGE-MONITORING ===") | bold | center |
+               {text("=== OBSERVER: STORAGE-MONITORING ===") | bold | center | italic |
                     color(Color::DarkOrange),
                 separator(),
                 hbox({
@@ -291,7 +248,7 @@ void ShowRealTimeMaximumAsciiUIForStorage() {
                         color(Color::LightSkyBlue3Bis),
                     text("| Free (GB)") | bold | size(WIDTH, EQUAL, 19) |
                         color(Color::LightSkyBlue3Bis),
-                    text("| Load (%)") | bold | size(WIDTH, EQUAL, 12) |
+                    text("| Load (%)") | bold | size(WIDTH, EQUAL, 10) |
                         color(Color::LightSkyBlue3Bis),
                 }),
                 separator(), vbox(device_rows), separator(),
@@ -299,10 +256,11 @@ void ShowRealTimeMaximumAsciiUIForStorage() {
                 separator(),
                 text("Current user: " + current_user) | bold | color(Color::LightSkyBlue3Bis),
                 separator(),
-                text("RETURN TO STARTING MENU: Press [R] or [r]") | bold | center |
+                text("=== RETURN TO STARTING MENU: Press [R] or [r] ===") | bold | center | italic |
                     color(Color::DarkOrange),
                 separator(),
-                text("EXIT: Press [Q] or [q]") | bold | center | color(Color::DarkOrange)}) |
+                text("=== EXIT: Press [Q] or [q] ===") | bold | center | italic |
+                    color(Color::DarkOrange)}) |
            borderLight;
   });
 
@@ -326,6 +284,7 @@ void ShowRealTimeMaximumAsciiUIForStorage() {
     if (event == Event::Character('r') || event == Event::Character('R')) {
       running = false;
       screen.ExitLoopClosure()();  // Close the screen
+      OptionDetectionForStartingMenu();
       return true;
     }
 
@@ -334,5 +293,68 @@ void ShowRealTimeMaximumAsciiUIForStorage() {
 
   screen.Loop(renderer);
   updater.join();
+}
+
+/**
+ * @brief Starting menu displayed at the launch of the application.
+ * @return int representing the user's selected option.
+ */
+int OptionDetectionForStartingMenu() {
+  auto screen = ScreenInteractive::Fullscreen();
+  // Preprocessing of the data
+  std::string current_user = observer::utilities::GetCurrentUser();
+  std::string date = observer::utilities::GetSystemTimestamp();
+
+  Component renderer = Renderer([&] {
+    return vbox({
+               text("=== OBSERVER SYSTEM MONITOR ===") | bold | center | italic |
+                   color(Color::DarkOrange),
+               separator(),
+               text("=== INITIAL STARTING PAGE ===") | bold | center | italic |
+                   color(Color::DarkOrange),
+               separator(),
+               text("DATE:  " + date) | bold | color(Color::White),
+               separator(),
+               text("CURRENT USER: " + current_user) | bold | color(Color::DarkOrange),
+               separator(),
+               text("SELECTABLE OPTIONS: [1] CPU-MONITORING, [2] MEMORY-MONITORING, [3] "
+                    "STORAGE-MONITORING") |
+                   bold | color(Color::White),
+               separator(),
+               text("=== EXIT: PRESS [Q] OR [q] ===") | bold | center | italic |
+                   color(Color::DarkOrange),
+               separator(),
+           }) |
+           border;
+  });
+
+  // Terminate the process
+  int selected_option = 0;
+  renderer |= CatchEvent([&](Event event) {
+    if (event == Event::Character('1')) {
+      selected_option = 1;
+      screen.ExitLoopClosure()();
+      ShowRealTimeMaximumAsciiUIForCPU();
+      return true;
+    } else if (event == Event::Character('2')) {
+      selected_option = 2;
+      screen.ExitLoopClosure()();
+      ShowRealtTimeMaximumAsciiUIForRAM();
+      return true;
+    } else if (event == Event::Character('3')) {
+      selected_option = 3;
+      screen.ExitLoopClosure()();
+      ShowRealTimeMaximumAsciiUIForStorage();
+      return true;
+    } else if (event == Event::Character('q') || event == Event::Character('Q')) {
+      selected_option = 0;
+      screen.ExitLoopClosure()();
+      return true;
+    }
+    return false;
+  });
+
+  screen.Loop(renderer);
+  return selected_option;
 }
 }  // namespace observer::monitoring

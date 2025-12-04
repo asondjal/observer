@@ -2,6 +2,6 @@
 #include "utils/monitoring.hpp"
 
 int main() {
-  observer::app::Launch();
+  observer::monitoring::MinimumRealTimeAsciiUIForCPU();
   return 0;
 }
