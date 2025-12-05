@@ -4,7 +4,64 @@ using namespace ftxui;
 
 namespace observer::monitoring {
 
-void MinimumRealTimeAsciiUIForCPU() {}
+/**
+ * @brief Display of average CPU-temperature as a concatenated loop via CLI in ASCII
+ */
+void MinimumRealTimeAsciiUIForCPU() {
+
+
+    observer::graph::LiveCPUGraph cpu_graph(300);
+    cpu_graph.set_max_value(100);
+
+    std::atomic<bool> running = true;
+
+    // background-thread for sampling
+
+    std::thread sampler([&] {
+        while (running.load()) {
+ 
+            double t = observer::graph::simulate_cpu_temp();
+            cpu_graph.push((int)t);
+
+            std::this_thread::sleep_for(100ms);
+        }
+    });
+
+    // main-loop for rendering
+    std::string reset_position;
+
+    while (running.load()) {
+        auto document =
+            vbox({
+                text("AVERAGE CPU-TEMPERATURE") | bold,
+                separator(),
+                ftxui::graph(std::ref(cpu_graph)) | color(Color::RedLight),
+            })
+            | border;
+
+        auto screen =
+            Screen::Create(Dimension::Full(), Dimension::Fit(document));
+
+        Render(screen, document);
+        std::cout << reset_position;
+        screen.Print();
+        reset_position = screen.ResetPosition();
+
+        // Eingabe: R = Exit (wie gewünscht)
+        if (std::cin.rdbuf()->in_avail() > 0) {
+            char c;
+            std::cin.get(c);
+            if (c == 'r' || c == 'R') {
+                running = false;
+            }
+        }
+
+        std::this_thread::sleep_for(0.03s);
+    }
+
+    running = false;
+    sampler.join();
+}
 
 /**
  * @brief Displays a real-time ASCII UI for CPU monitoring using FTXUI.
@@ -113,7 +170,7 @@ void ShowRealTimeMaximumAsciiUIForCPU() {
       OptionDetectionForStartingMenu();
       return true;
     }
-    return false;
+    return true;
   });
 
   screen.Loop(renderer);
@@ -188,7 +245,7 @@ void ShowRealtTimeMaximumAsciiUIForRAM() {
       OptionDetectionForStartingMenu();
       return true;
     }
-    return false;
+    return true;
   });
 
   screen.Loop(renderer);
@@ -288,7 +345,7 @@ void ShowRealTimeMaximumAsciiUIForStorage() {
       return true;
     }
 
-    return false;
+    return true;
   });
 
   screen.Loop(renderer);
@@ -351,7 +408,7 @@ int OptionDetectionForStartingMenu() {
       screen.ExitLoopClosure()();
       return true;
     }
-    return false;
+    return true;
   });
 
   screen.Loop(renderer);

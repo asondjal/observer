@@ -11,9 +11,12 @@
 #include <memory>
 #include <thread>
 
+using namespace std::chrono_literals;
+
 #include "utils/cpu.hpp"
 #include "utils/ram.hpp"
 #include "utils/storage.hpp"
+#include "utils/graph.hpp"
 
 namespace observer::monitoring {
 void MinimumRealTimeAsciiUIForCPU();
