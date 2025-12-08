@@ -2,8 +2,7 @@
 #include "utils/monitoring.hpp"
 
 int main() {
-  // observer::app::RunObserverApp();
-  // observer::monitoring::MinimumRealTimeAsciiUIForCPU();
-  observer::monitoring::MinimumRealTimeAsciiUIForCPU();
+  observer::app::RunObserverApp();
+  // observer::monitoring::ShowRealTimeMinimumAsciiUIForCPU();
   return 0;
 }

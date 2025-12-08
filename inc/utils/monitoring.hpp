@@ -14,12 +14,12 @@
 using namespace std::chrono_literals;
 
 #include "utils/cpu.hpp"
+#include "utils/graph.hpp"
 #include "utils/ram.hpp"
 #include "utils/storage.hpp"
-#include "utils/graph.hpp"
 
 namespace observer::monitoring {
-void MinimumRealTimeAsciiUIForCPU();
+void ShowRealTimeMinimumAsciiUIForCPU();
 void ShowRealTimeMaximumAsciiUIForCPU();
 void ShowRealtTimeMaximumAsciiUIForRAM();
 void ShowRealTimeMaximumAsciiUIForStorage();

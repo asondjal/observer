@@ -5,63 +5,78 @@ using namespace ftxui;
 namespace observer::monitoring {
 
 /**
- * @brief Display of average CPU-temperature as a concatenated loop via CLI in ASCII
+ * @brief Display of average CPU-temperature as a concatenated loop via CLI in ASCII-format
  */
-void MinimumRealTimeAsciiUIForCPU() {
-
+void ShowRealTimeMinimumAsciiUIForCPU() {
+    auto screen = ScreenInteractive::Fullscreen();
+    std::atomic<bool> running = true;
 
     observer::graph::LiveCPUGraph cpu_graph(300);
     cpu_graph.set_max_value(100);
 
-    std::atomic<bool> running = true;
 
-    // background-thread for sampling
-
+    // Sampling thread (live graph update)
     std::thread sampler([&] {
-        while (running.load()) {
- 
+        while (running) {
             double t = observer::graph::simulate_cpu_temp();
             cpu_graph.push((int)t);
+
+            // Trigger screen update
+            screen.Post(Event::Custom);
 
             std::this_thread::sleep_for(100ms);
         }
     });
 
-    // main-loop for rendering
-    std::string reset_position;
 
-    while (running.load()) {
-        auto document =
-            vbox({
-                text("AVERAGE CPU-TEMPERATURE") | bold,
-                separator(),
-                ftxui::graph(std::ref(cpu_graph)) | color(Color::RedLight),
-            })
-            | border;
+    Component component = Renderer([&] {
+        return vbox({
+            text("=== OBSERVER: MINIMUM CPU-MONITORING ===") | bold | center | italic |
+                  color(Color::LightSkyBlue3Bis),
+            separator(),
+            text("CPU Model: " + observer::cpu::GetCPUModel()) | bold | color(Color::LightSkyBlue3Bis),
+            separator(),
+            text("Average CPU Temperature: " + 
+                 std::to_string(observer::cpu::GetAverageCPUTemperature()) + " °C"),
+            ftxui::graph(std::ref(cpu_graph)) | color(Color::RedLight),
+            separator(),
+            text("MAXIMUM INFORMATION: PRESS ↑") | bold | center,
+            text("RETURN TO STARTING MENU: PRESS [R] or [r]") | bold | center,
+            text("EXIT: PRESS [Q]or [q]") | bold | center
+        }) | border;
+    });
 
-        auto screen =
-            Screen::Create(Dimension::Full(), Dimension::Fit(document));
-
-        Render(screen, document);
-        std::cout << reset_position;
-        screen.Print();
-        reset_position = screen.ResetPosition();
-
-        // Eingabe: R = Exit (wie gewünscht)
-        if (std::cin.rdbuf()->in_avail() > 0) {
-            char c;
-            std::cin.get(c);
-            if (c == 'r' || c == 'R') {
-                running = false;
-            }
+    component = CatchEvent(component, [&](Event event) {
+        if (event == Event::Character('q') || event == Event::Character('Q')) {
+            running = false;
+            screen.ExitLoopClosure()();
+            return true;
         }
 
-        std::this_thread::sleep_for(0.03s);
-    }
+        if (event == Event::Character('r') || event == Event::Character('R')) {
+            running = false;
+            screen.ExitLoopClosure()();
+            OptionDetectionForStartingMenu();
+            return true;
+        }
+
+        if (event == Event::ArrowUp) {
+            running = false;
+            screen.ExitLoopClosure()();
+            ShowRealTimeMaximumAsciiUIForCPU();
+            return true;
+        }
+
+        return false;
+    });
+
+    // Event loop
+    screen.Loop(component);
 
     running = false;
     sampler.join();
 }
+
 
 /**
  * @brief Displays a real-time ASCII UI for CPU monitoring using FTXUI.
@@ -98,7 +113,7 @@ void ShowRealTimeMaximumAsciiUIForCPU() {
       }));
     }
 
-    return vbox({text("=== OBSERVER: CPU-MONITORING ===") | bold | center | italic |
+    return vbox({text("=== OBSERVER: DETAILED CPU-MONITORING ===") | bold | center | italic |
                      color(Color::DarkOrange),
                  separator(),
                  text("CPU: " + cpu_name) | bold | color(Color::LightSkyBlue3Bis),
@@ -115,7 +130,8 @@ void ShowRealTimeMaximumAsciiUIForCPU() {
                  separator(),
                  vbox(core_rows),
                  separator(),
-                 text("Average Temperature: " + std::to_string(avg_temp) + " °C") | bold |
+
+                 text("Average CPU-Temperature: " + std::to_string(avg_temp) + " °C") | bold |
                      color(Color::White),
                  separator(),
                  text("Average Frequency: " + std::to_string(avg_freq) + " MHz") | bold |
@@ -132,11 +148,8 @@ void ShowRealTimeMaximumAsciiUIForCPU() {
                  separator(),
                  text("Current user: " + current_user) | bold | color(Color::LightSkyBlue3Bis),
                  separator(),
-                 text("=== RETURN TO STARTING MENU: Press [R] or [r] ===") | bold | center |
-                     italic | color(Color::DarkOrange),
-                 separator(),
-                 text("=== EXIT: Press [Q] or [q] ===") | bold | center | italic |
-                     color(Color::DarkOrange)}) |
+                 text("=== RETURN TO STARTING MENU: Press [R] or [r] ===") | bold | center,
+                 text("=== EXIT: Press [Q] or [q] ===") | bold | center}) |
            borderLight;
   });
 
@@ -152,7 +165,7 @@ void ShowRealTimeMaximumAsciiUIForCPU() {
       ctx_switches = observer::cpu::GetContextSwitchesPerSec();
       interrupts = observer::cpu::GetInterruptsPerSec();
       screen.PostEvent(Event::Custom);
-      std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+      std::this_thread::sleep_for(std::chrono::milliseconds(500));
     }
   });
 
@@ -168,6 +181,13 @@ void ShowRealTimeMaximumAsciiUIForCPU() {
       running = false;
       screen.ExitLoopClosure()();  // Close the screen
       OptionDetectionForStartingMenu();
+      return true;
+    }
+
+    if (event == Event::ArrowDown) {
+      running = false;
+      screen.ExitLoopClosure()();  // Close the screen
+      ShowRealTimeMinimumAsciiUIForCPU();
       return true;
     }
     return true;
@@ -192,7 +212,7 @@ void ShowRealtTimeMaximumAsciiUIForRAM() {
   double used_percent = 0.0000;
 
   Component renderer = Renderer([&] {
-    return vbox({text("=== OBSERVER: MEMORY-MONITORING ===") | bold | center | italic |
+    return vbox({text("=== OBSERVER: DETAILED MEMORY-MONITORING ===") | bold | center | italic |
                      color(Color::DarkOrange),
                  separator(),
                  text("Total memory: " + std::to_string(total_ram) + " MB") | bold |
@@ -210,11 +230,9 @@ void ShowRealtTimeMaximumAsciiUIForRAM() {
                  separator(),
                  text("Current user: " + current_user) | bold | color(Color::LightSkyBlue3Bis),
                  separator(),
-                 text("=== RETURN TO STARTING MENU: Press [R] or [r] ===") | bold | center |
-                     italic | color(Color::DarkOrange),
-                 separator(),
-                 text("=== EXIT: Press [Q] or [q] ===") | bold | center | italic |
-                     color(Color::DarkOrange)}) |
+                text("MAXIMUM INFORMATION: PRESS ↑") | bold | center,
+                 text("=== RETURN TO STARTING MENU: Press [R] or [r] ===") | bold | center,
+                 text("=== EXIT: Press [Q] or [q] ===") | bold | center}) |
            borderLight;
   });
 
@@ -245,6 +263,14 @@ void ShowRealtTimeMaximumAsciiUIForRAM() {
       OptionDetectionForStartingMenu();
       return true;
     }
+
+
+    if (event == Event::ArrowDown) {
+            running = false;
+            screen.ExitLoopClosure()();
+            ShowRealTimeMinimumAsciiUIForCPU();
+            return true;
+        }
     return true;
   });
 
@@ -290,7 +316,7 @@ void ShowRealTimeMaximumAsciiUIForStorage() {
     }
 
     return vbox(
-               {text("=== OBSERVER: STORAGE-MONITORING ===") | bold | center | italic |
+               {text("=== OBSERVER: DETAILED STORAGE-MONITORING ===") | bold | center | italic |
                     color(Color::DarkOrange),
                 separator(),
                 hbox({
@@ -378,9 +404,8 @@ int OptionDetectionForStartingMenu() {
                     "STORAGE-MONITORING") |
                    bold | color(Color::White),
                separator(),
-               text("=== EXIT: PRESS [Q] OR [q] ===") | bold | center | italic |
+               text("=== EXIT: PRESS [Q] OR [q] ===") | bold | center |
                    color(Color::DarkOrange),
-               separator(),
            }) |
            border;
   });

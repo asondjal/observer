@@ -54,10 +54,10 @@ mkdir -p "$BUILD_DIR"
 cd "$BUILD_DIR"
 
 # Run CMake configuration (using Ninja generator). 
-# This will generate the 'format' target based on the updated CMakeLists.txt.
+
 echo "Running CMake configuration..."
 if cmake .. -G Ninja; then
-    # Run Ninja build
+
     echo "Running Ninja build..."
     if ninja; then
         echo -e "\n--- Build successful! ---"
@@ -71,7 +71,7 @@ else
     echo "Configuration failed. Check your CMakeLists.txt file for errors."
 fi
 
-cd "$PROJECT_DIR" # Return to project root
+cd "$PROJECT_DIR"
 
-echo -e "\nInstallation and Build process complete."
+echo -e "\nInstallation and Build process were complete successfully!"
 

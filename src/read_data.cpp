@@ -6,6 +6,11 @@ ReadData::ReadData(const std::string& path) : filePath_{path} {}
 
 std::mutex& ReadData::GetMutex() { return mtx_; }
 
+/**
+ * @brief Get the file type based on the file extension
+ * @param location File location
+ * @return File extension as a string
+ */
 std::string ReadData::GetFileType(const std::string& location) const {
   std::string fileType = std::filesystem::path(location).extension().string();
   return fileType;
