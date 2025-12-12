@@ -10,6 +10,9 @@
 #include <ftxui/dom/elements.hpp>
 #include <memory>
 #include <thread>
+#include <mutex>
+#include <termios.h>
+#include <unistd.h>
 
 using namespace std::chrono_literals;
 
@@ -19,6 +22,22 @@ using namespace std::chrono_literals;
 #include "utils/storage.hpp"
 
 namespace observer::monitoring {
+struct TermiosGuard {
+    termios oldt{};
+    TermiosGuard() {
+        tcgetattr(STDIN_FILENO, &oldt);
+        termios newt = oldt;
+
+        // Echo aus, canonical mode aus
+        newt.c_lflag &= ~(ECHO | ICANON);
+
+        tcsetattr(STDIN_FILENO, TCSANOW, &newt);
+    }
+    ~TermiosGuard() {
+        tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
+    }
+};
+ 
 void ShowRealTimeMinimumAsciiUIForCPU();
 void ShowRealTimeMaximumAsciiUIForCPU();
 void ShowRealtTimeMaximumAsciiUIForRAM();
