@@ -1,4 +1,5 @@
 #include "utils/monitoring.hpp"
+
 #include <mutex>
 
 using namespace ftxui;
@@ -9,6 +10,8 @@ namespace observer::monitoring {
  * @brief Display of average CPU-temperature as a concatenated loop via CLI in ASCII-format
  */
 void ShowRealTimeMinimumAsciiUIForCPU() {
+  observer::utilities::GetLogger().Log("Monitoring: Starting minimum CPU monitoring UI",
+                                       observer::logging::LogLevel::INFO);
   auto screen = ScreenInteractive::Fullscreen();
   std::atomic<bool> running = true;
 
@@ -29,20 +32,19 @@ void ShowRealTimeMinimumAsciiUIForCPU() {
   });
 
   Component component = Renderer([&] {
-    return vbox({
-        text("=== OBSERVER: MINIMUM CPU-MONITORING ===") | bold | center | italic |
-              color(Color::LightSkyBlue3Bis),
-        separator(),
-        text("CPU Model: " + observer::cpu::GetCPUModel()) | bold | color(Color::LightSkyBlue3Bis),
-        separator(),
-        text("Average CPU Temperature: " + 
-             std::to_string(observer::cpu::GetAverageCPUTemperature()) + " °C"),
-        ftxui::graph(std::ref(cpu_graph)) | color(Color::RedLight),
-        separator(),
-        text("MAXIMUM INFORMATION: PRESS ↑") | bold | center,
-        text("RETURN TO STARTING MENU: PRESS [R] or [r]") | bold | center,
-        text("EXIT: PRESS [Q]or [q]") | bold | center
-    }) | border;
+    return vbox({text("=== OBSERVER: MINIMUM CPU-MONITORING ===") | bold | center | italic |
+                     color(Color::LightSkyBlue3Bis),
+                 separator(),
+                 text("CPU Model: " + observer::cpu::GetCPUModel()) | bold |
+                     color(Color::LightSkyBlue3Bis),
+                 separator(),
+                 text("Average CPU Temperature: " +
+                      std::to_string(observer::cpu::GetAverageCPUTemperature()) + " °C"),
+                 ftxui::graph(std::ref(cpu_graph)) | color(Color::RedLight), separator(),
+                 text("MAXIMUM INFORMATION: PRESS ↑") | bold | center,
+                 text("RETURN TO STARTING MENU: PRESS [R] or [r]") | bold | center,
+                 text("EXIT: PRESS [Q]or [q]") | bold | center}) |
+           border;
   });
 
   bool should_return_to_menu = false;
@@ -50,12 +52,18 @@ void ShowRealTimeMinimumAsciiUIForCPU() {
 
   component = CatchEvent(component, [&](Event event) {
     if (event == Event::Character('q') || event == Event::Character('Q')) {
+      observer::utilities::GetLogger().Log(
+          "Monitoring: Terminating minimum CPU monitoring UI and exiting",
+          observer::logging::LogLevel::WARNING);
       running = false;
       screen.ExitLoopClosure()();
       return true;
     }
 
     if (event == Event::Character('r') || event == Event::Character('R')) {
+      observer::utilities::GetLogger().Log(
+          "Monitoring: Terminating minimum CPU monitoring UI and returning to main menu",
+          observer::logging::LogLevel::WARNING);
       running = false;
       should_return_to_menu = true;
       screen.ExitLoopClosure()();
@@ -63,6 +71,10 @@ void ShowRealTimeMinimumAsciiUIForCPU() {
     }
 
     if (event == Event::ArrowUp) {
+      observer::utilities::GetLogger().Log(
+          "Monitoring: Terminating minimum CPU monitoring UI and switching to maximum CPU "
+          "monitoring UI",
+          observer::logging::LogLevel::WARNING);
       running = false;
       should_show_maximum = true;
       screen.ExitLoopClosure()();
@@ -77,7 +89,6 @@ void ShowRealTimeMinimumAsciiUIForCPU() {
   running = false;
   sampler.join();
 
-  // Handle navigation after proper cleanup
   if (should_return_to_menu) {
     OptionDetectionForStartingMenu();
   } else if (should_show_maximum) {
@@ -89,6 +100,8 @@ void ShowRealTimeMinimumAsciiUIForCPU() {
  * @brief Displays a real-time ASCII UI for CPU monitoring using FTXUI.
  */
 void ShowRealTimeMaximumAsciiUIForCPU() {
+  observer::utilities::GetLogger().Log("Monitoring: Starting maximum CPU monitoring UI",
+                                       observer::logging::LogLevel::INFO);
   auto screen = ScreenInteractive::Fullscreen();
   std::atomic<bool> running = true;
 
@@ -98,7 +111,7 @@ void ShowRealTimeMaximumAsciiUIForCPU() {
 
   // Thread-safe data storage with mutex protection
   std::mutex data_mutex;
-  
+
   double avg_temp = 0.0;
   double avg_freq = 0.0000;
   double idle_percent = 0.0;
@@ -110,9 +123,8 @@ void ShowRealTimeMaximumAsciiUIForCPU() {
   std::vector<double> loads = observer::cpu::GetCPULoadPerCore();
 
   Component renderer = Renderer([&] {
-    // Lock mutex for reading
     std::lock_guard<std::mutex> lock(data_mutex);
-    
+
     std::vector<Element> core_rows;
     for (size_t i = 0; i < temps.size(); ++i) {
       core_rows.push_back(hbox({
@@ -155,8 +167,7 @@ void ShowRealTimeMaximumAsciiUIForCPU() {
                  text("Context Switches/s: " + std::to_string(ctx_switches)) | bold |
                      color(Color::White),
                  separator(),
-                 text("Interrupts/s: " + std::to_string(interrupts)) | bold |
-                     color(Color::White),
+                 text("Interrupts/s: " + std::to_string(interrupts)) | bold | color(Color::White),
                  separator(),
                  text("Observation started: " + date) | bold | color(Color::LightSkyBlue3Bis),
                  separator(),
@@ -171,7 +182,6 @@ void ShowRealTimeMaximumAsciiUIForCPU() {
   // Background-thread for live-updates
   std::thread updater([&] {
     while (running) {
-      // Fetch new data
       auto new_temps = observer::cpu::GetAllCPUTemperatures();
       auto new_freqs = observer::cpu::GetAllCPUFrequencies();
       auto new_loads = observer::cpu::GetCPULoadPerCore();
@@ -180,8 +190,7 @@ void ShowRealTimeMaximumAsciiUIForCPU() {
       double new_idle_percent = observer::cpu::GetIdlePercentage();
       int new_ctx_switches = observer::cpu::GetContextSwitchesPerSec();
       int new_interrupts = observer::cpu::GetInterruptsPerSec();
-      
-      // Lock mutex and update all data atomically
+
       {
         std::lock_guard<std::mutex> lock(data_mutex);
         temps = std::move(new_temps);
@@ -193,7 +202,7 @@ void ShowRealTimeMaximumAsciiUIForCPU() {
         ctx_switches = new_ctx_switches;
         interrupts = new_interrupts;
       }
-      
+
       screen.PostEvent(Event::Custom);
       std::this_thread::sleep_for(std::chrono::milliseconds(500));
     }
@@ -205,12 +214,18 @@ void ShowRealTimeMaximumAsciiUIForCPU() {
   // Terminate the thread
   renderer |= CatchEvent([&](Event event) {
     if (event == Event::Character('q') || event == Event::Character('Q')) {
+      observer::utilities::GetLogger().Log(
+          "Monitoring: Terminating maximum CPU monitoring UI and exiting",
+          observer::logging::LogLevel::WARNING);
       running = false;
       screen.ExitLoopClosure()();
       return true;
     }
 
     if (event == Event::Character('r') || event == Event::Character('R')) {
+      observer::utilities::GetLogger().Log(
+          "Monitoring: Terminating maximum CPU monitoring UI and returning to main UI",
+          observer::logging::LogLevel::WARNING);
       running = false;
       should_return_to_menu = true;
       screen.ExitLoopClosure()();
@@ -218,6 +233,10 @@ void ShowRealTimeMaximumAsciiUIForCPU() {
     }
 
     if (event == Event::ArrowDown) {
+      observer::utilities::GetLogger().Log(
+          "Monitoring: Terminating maximum CPU monitoring UI and switching to minimum CPU "
+          "monitoring UI",
+          observer::logging::LogLevel::WARNING);
       running = false;
       should_show_minimum = true;
       screen.ExitLoopClosure()();
@@ -227,11 +246,10 @@ void ShowRealTimeMaximumAsciiUIForCPU() {
   });
 
   screen.Loop(renderer);
-  
+
   running = false;
   updater.join();
 
-  // Handle navigation after proper cleanup
   if (should_return_to_menu) {
     OptionDetectionForStartingMenu();
   } else if (should_show_minimum) {
@@ -243,23 +261,23 @@ void ShowRealTimeMaximumAsciiUIForCPU() {
  * @brief Displays a real-time ASCII UI for RAM monitoring using FTXUI.
  */
 void ShowRealtTimeMaximumAsciiUIForRAM() {
+  observer::utilities::GetLogger().Log("Monitoring: Starting maximum RAM monitoring UI",
+                                       observer::logging::LogLevel::INFO);
   auto screen = ScreenInteractive::Fullscreen();
   std::atomic<bool> running = true;
   std::string date = observer::utilities::GetSystemTimestamp();
   std::string current_user = observer::utilities::GetCurrentUser();
 
-  // Thread-safe data storage with mutex protection
   std::mutex data_mutex;
-  
+
   double total_ram = 0.0000;
   double available_ram = 0.0000;
   double used_ram = 0.0000;
   double used_percent = 0.0000;
 
   Component renderer = Renderer([&] {
-    // Lock mutex for reading
     std::lock_guard<std::mutex> lock(data_mutex);
-    
+
     return vbox({text("=== OBSERVER: DETAILED MEMORY-MONITORING ===") | bold | center | italic |
                      color(Color::DarkOrange),
                  separator(),
@@ -287,8 +305,7 @@ void ShowRealtTimeMaximumAsciiUIForRAM() {
   std::thread updater([&] {
     while (running) {
       observer::ram::RAMInfo current_state = observer::ram::ReadRAMInfo();
-      
-      // Lock mutex and update all data atomically
+
       {
         std::lock_guard<std::mutex> lock(data_mutex);
         total_ram = current_state.total_MB;
@@ -296,7 +313,7 @@ void ShowRealtTimeMaximumAsciiUIForRAM() {
         used_ram = current_state.used_MB;
         used_percent = current_state.used_percent;
       }
-      
+
       screen.PostEvent(Event::Custom);
       std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     }
@@ -307,12 +324,18 @@ void ShowRealtTimeMaximumAsciiUIForRAM() {
   // Terminate the thread
   renderer |= CatchEvent([&](Event event) {
     if (event == Event::Character('q') || event == Event::Character('Q')) {
+      observer::utilities::GetLogger().Log(
+          "Monitoring: Terminating maximum RAM monitoring UI and exiting",
+          observer::logging::LogLevel::WARNING);
       running = false;
       screen.ExitLoopClosure()();
       return true;
     }
 
     if (event == Event::Character('r') || event == Event::Character('R')) {
+      observer::utilities::GetLogger().Log(
+          "Monitoring: Terminating maximum RAM monitoring UI and returning to main menu",
+          observer::logging::LogLevel::WARNING);
       running = false;
       should_return_to_menu = true;
       screen.ExitLoopClosure()();
@@ -323,11 +346,10 @@ void ShowRealtTimeMaximumAsciiUIForRAM() {
   });
 
   screen.Loop(renderer);
-  
+
   running = false;
   updater.join();
 
-  // Handle navigation after proper cleanup
   if (should_return_to_menu) {
     OptionDetectionForStartingMenu();
   }
@@ -337,19 +359,19 @@ void ShowRealtTimeMaximumAsciiUIForRAM() {
  * @brief Displays a real-time ASCII UI for Storage monitoring using FTXUI.
  */
 void ShowRealTimeMaximumAsciiUIForStorage() {
+  observer::utilities::GetLogger().Log("Monitoring: Starting maximum Storage monitoring UI",
+                                       observer::logging::LogLevel::INFO);
   auto screen = ScreenInteractive::Fullscreen();
   std::atomic<bool> running = true;
   std::string date = observer::utilities::GetSystemTimestamp();
   std::string current_user = observer::utilities::GetCurrentUser();
-  
-  // Thread-safe data storage with mutex protection
+
   std::mutex data_mutex;
   std::vector<observer::storage::StorageInfo> storages = observer::storage::ReadAllStorageDevices();
 
   Component renderer = Renderer([&] {
-    // Lock mutex for reading
     std::lock_guard<std::mutex> lock(data_mutex);
-    
+
     std::vector<Element> device_rows;
     for (size_t i = 0; i < storages.size(); i++) {
       device_rows.push_back(hbox({
@@ -412,13 +434,12 @@ void ShowRealTimeMaximumAsciiUIForStorage() {
   std::thread updater([&] {
     while (running) {
       auto new_storages = observer::storage::ReadAllStorageDevices();
-      
-      // Lock mutex and update data atomically
+
       {
         std::lock_guard<std::mutex> lock(data_mutex);
         storages = std::move(new_storages);
       }
-      
+
       screen.PostEvent(Event::Custom);
       std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     }
@@ -429,12 +450,18 @@ void ShowRealTimeMaximumAsciiUIForStorage() {
   // Terminate the process
   renderer |= CatchEvent([&](Event event) {
     if (event == Event::Character('q') || event == Event::Character('Q')) {
+      observer::utilities::GetLogger().Log(
+          "Monitoring: Terminating maximum Storage monitoring UI and exiting",
+          observer::logging::LogLevel::WARNING);
       running = false;
       screen.ExitLoopClosure()();
       return true;
     }
 
     if (event == Event::Character('r') || event == Event::Character('R')) {
+      observer::utilities::GetLogger().Log(
+          "Monitoring: Terminating maximum Storage monitoring UI and returning to main menu",
+          observer::logging::LogLevel::WARNING);
       running = false;
       should_return_to_menu = true;
       screen.ExitLoopClosure()();
@@ -445,13 +472,15 @@ void ShowRealTimeMaximumAsciiUIForStorage() {
   });
 
   screen.Loop(renderer);
-  
+
   running = false;
   updater.join();
 
-  // Handle navigation after proper cleanup
   if (should_return_to_menu) {
     OptionDetectionForStartingMenu();
+    observer::utilities::GetLogger().Log(
+        "Monitoring: Terminating maximum Storage monitoring UI and exiting",
+        observer::logging::LogLevel::WARNING);
   }
 }
 
@@ -460,8 +489,11 @@ void ShowRealTimeMaximumAsciiUIForStorage() {
  * @return int representing the user's selected option.
  */
 int OptionDetectionForStartingMenu() {
+  observer::utilities::GetLogger().Log("Monitoring: Starting observer UI",
+                                       observer::logging::LogLevel::INFO);
+
   auto screen = ScreenInteractive::Fullscreen();
-  // Preprocessing of the data
+
   std::string current_user = observer::utilities::GetCurrentUser();
   std::string date = observer::utilities::GetSystemTimestamp();
 
@@ -481,8 +513,7 @@ int OptionDetectionForStartingMenu() {
                     "STORAGE-MONITORING") |
                    bold | color(Color::White),
                separator(),
-               text("=== EXIT: PRESS [Q] OR [q] ===") | bold | center |
-                   color(Color::DarkOrange),
+               text("=== EXIT: PRESS [Q] OR [q] ===") | bold | center | color(Color::DarkOrange),
            }) |
            border;
   });
@@ -512,7 +543,6 @@ int OptionDetectionForStartingMenu() {
 
   screen.Loop(renderer);
 
-  // Handle navigation after screen is properly cleaned up
   if (selected_option == 1) {
     ShowRealTimeMaximumAsciiUIForCPU();
   } else if (selected_option == 2) {
