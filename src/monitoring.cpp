@@ -40,7 +40,38 @@ void ShowRealTimeMinimumAsciiUIForCPU() {
                  separator(),
                  text("Average CPU Temperature: " +
                       std::to_string(observer::cpu::GetAverageCPUTemperature()) + " °C"),
-                 ftxui::graph(std::ref(cpu_graph)) | color(Color::RedLight), separator(),
+hbox({
+  vbox({
+    text("100°C") | color(Color::RedLight) | dim,
+    filler(),
+    text("90°C") | color(Color::RedLight) | dim,
+    filler(),
+    text("80°C") | color(Color::DarkOrange) | dim,
+    filler(),
+        text("70°C") | color(Color::Yellow2)  | dim,
+    filler(),
+        text("60°C") | color(Color::GreenYellow) | dim,
+    filler(),
+    text("50°C") | color(Color::GreenYellow) | dim,
+    filler(),
+        text("40°C") | color(Color::GreenLight) | dim,
+    filler(),
+        text("30°C") | color(Color::GreenLight) | dim,
+    filler(),
+        text("20°C") | color(Color::GreenLight) | dim,
+    filler(),
+        text("10°C") | color(Color::GreenLight)| dim,
+    filler(),
+    text("0°C") | color(Color::GreenLight)| dim,
+  }) | size(WIDTH, EQUAL, 6),
+
+  separator(),
+
+  ftxui::graph(std::ref(cpu_graph))
+      | color(Color::LightSkyBlue3Bis)
+      | flex
+})
+, separator(),
                  text("MAXIMUM INFORMATION: PRESS ↑") | bold | center,
                  text("RETURN TO STARTING MENU: PRESS [R] or [r]") | bold | center,
                  text("EXIT: PRESS [Q]or [q]") | bold | center}) |
