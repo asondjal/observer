@@ -41,19 +41,19 @@ fi
 # 5. Build Project
 echo -e "\n--- Starting CMake Configuration and Build (Ninja) ---"
 
-# Get current directory and define build path
+# 6. Get current directory and define build path
 PROJECT_DIR=$(pwd)
 BUILD_DIR="${PROJECT_DIR}/build"
 
-# Clean previous build
+# 7. Clean previous build
 echo "Cleaning up previous build directory..."
 rm -rf "$BUILD_DIR"
 
-# Create and enter the build directory
+# 8. Create and enter the build directory
 mkdir -p "$BUILD_DIR"
 cd "$BUILD_DIR"
 
-# Run CMake configuration (using Ninja generator). 
+# 9. Run CMake. 
 
 echo "Running CMake configuration..."
 if cmake .. -G Ninja; then
@@ -71,6 +71,7 @@ else
     echo "Configuration failed. Check your CMakeLists.txt file for errors."
 fi
 
+# 10. Return to root project
 cd "$PROJECT_DIR"
 
 echo -e "\nInstallation and Build process were complete successfully!"

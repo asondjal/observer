@@ -52,18 +52,12 @@ void ShowRealTimeMinimumAsciiUIForCPU() {
 
   component = CatchEvent(component, [&](Event event) {
     if (event == Event::Character('q') || event == Event::Character('Q')) {
-      observer::utilities::GetLogger().Log(
-          "Monitoring: Terminating minimum CPU monitoring UI and exiting",
-          observer::logging::LogLevel::WARNING);
       running = false;
       screen.ExitLoopClosure()();
       return true;
     }
 
     if (event == Event::Character('r') || event == Event::Character('R')) {
-      observer::utilities::GetLogger().Log(
-          "Monitoring: Terminating minimum CPU monitoring UI and returning to main menu",
-          observer::logging::LogLevel::WARNING);
       running = false;
       should_return_to_menu = true;
       screen.ExitLoopClosure()();
@@ -71,10 +65,6 @@ void ShowRealTimeMinimumAsciiUIForCPU() {
     }
 
     if (event == Event::ArrowUp) {
-      observer::utilities::GetLogger().Log(
-          "Monitoring: Terminating minimum CPU monitoring UI and switching to maximum CPU "
-          "monitoring UI",
-          observer::logging::LogLevel::WARNING);
       running = false;
       should_show_maximum = true;
       screen.ExitLoopClosure()();
@@ -85,6 +75,8 @@ void ShowRealTimeMinimumAsciiUIForCPU() {
   });
 
   screen.Loop(component);
+  observer::utilities::GetLogger().Log("Monitoring: Terminating minimum CPU monitoring UI",
+                                       observer::logging::LogLevel::WARNING);
 
   running = false;
   sampler.join();
@@ -100,6 +92,7 @@ void ShowRealTimeMinimumAsciiUIForCPU() {
  * @brief Displays a real-time ASCII UI for CPU monitoring using FTXUI.
  */
 void ShowRealTimeMaximumAsciiUIForCPU() {
+  observer::cpu::SaveConfidentialCPUInfo();
   observer::utilities::GetLogger().Log("Monitoring: Starting maximum CPU monitoring UI",
                                        observer::logging::LogLevel::INFO);
   auto screen = ScreenInteractive::Fullscreen();
@@ -109,7 +102,6 @@ void ShowRealTimeMaximumAsciiUIForCPU() {
   std::string date = observer::utilities::GetSystemTimestamp();
   std::string current_user = observer::utilities::GetCurrentUser();
 
-  // Thread-safe data storage with mutex protection
   std::mutex data_mutex;
 
   double avg_temp = 0.0;
@@ -214,18 +206,12 @@ void ShowRealTimeMaximumAsciiUIForCPU() {
   // Terminate the thread
   renderer |= CatchEvent([&](Event event) {
     if (event == Event::Character('q') || event == Event::Character('Q')) {
-      observer::utilities::GetLogger().Log(
-          "Monitoring: Terminating maximum CPU monitoring UI and exiting",
-          observer::logging::LogLevel::WARNING);
       running = false;
       screen.ExitLoopClosure()();
       return true;
     }
 
     if (event == Event::Character('r') || event == Event::Character('R')) {
-      observer::utilities::GetLogger().Log(
-          "Monitoring: Terminating maximum CPU monitoring UI and returning to main UI",
-          observer::logging::LogLevel::WARNING);
       running = false;
       should_return_to_menu = true;
       screen.ExitLoopClosure()();
@@ -233,10 +219,6 @@ void ShowRealTimeMaximumAsciiUIForCPU() {
     }
 
     if (event == Event::ArrowDown) {
-      observer::utilities::GetLogger().Log(
-          "Monitoring: Terminating maximum CPU monitoring UI and switching to minimum CPU "
-          "monitoring UI",
-          observer::logging::LogLevel::WARNING);
       running = false;
       should_show_minimum = true;
       screen.ExitLoopClosure()();
@@ -246,6 +228,8 @@ void ShowRealTimeMaximumAsciiUIForCPU() {
   });
 
   screen.Loop(renderer);
+  observer::utilities::GetLogger().Log("Monitoring: Terminating maximum CPU monitoring UI",
+                                       observer::logging::LogLevel::WARNING);
 
   running = false;
   updater.join();
@@ -261,6 +245,7 @@ void ShowRealTimeMaximumAsciiUIForCPU() {
  * @brief Displays a real-time ASCII UI for RAM monitoring using FTXUI.
  */
 void ShowRealtTimeMaximumAsciiUIForRAM() {
+  observer::ram::SaveConfidentialRAMInfo();
   observer::utilities::GetLogger().Log("Monitoring: Starting maximum RAM monitoring UI",
                                        observer::logging::LogLevel::INFO);
   auto screen = ScreenInteractive::Fullscreen();
@@ -324,18 +309,12 @@ void ShowRealtTimeMaximumAsciiUIForRAM() {
   // Terminate the thread
   renderer |= CatchEvent([&](Event event) {
     if (event == Event::Character('q') || event == Event::Character('Q')) {
-      observer::utilities::GetLogger().Log(
-          "Monitoring: Terminating maximum RAM monitoring UI and exiting",
-          observer::logging::LogLevel::WARNING);
       running = false;
       screen.ExitLoopClosure()();
       return true;
     }
 
     if (event == Event::Character('r') || event == Event::Character('R')) {
-      observer::utilities::GetLogger().Log(
-          "Monitoring: Terminating maximum RAM monitoring UI and returning to main menu",
-          observer::logging::LogLevel::WARNING);
       running = false;
       should_return_to_menu = true;
       screen.ExitLoopClosure()();
@@ -346,6 +325,8 @@ void ShowRealtTimeMaximumAsciiUIForRAM() {
   });
 
   screen.Loop(renderer);
+  observer::utilities::GetLogger().Log("Monitoring: Terminating maximum RAM monitoring UI",
+                                       observer::logging::LogLevel::WARNING);
 
   running = false;
   updater.join();
@@ -359,6 +340,7 @@ void ShowRealtTimeMaximumAsciiUIForRAM() {
  * @brief Displays a real-time ASCII UI for Storage monitoring using FTXUI.
  */
 void ShowRealTimeMaximumAsciiUIForStorage() {
+  observer::storage::SaveConfidentialStorageInfo();
   observer::utilities::GetLogger().Log("Monitoring: Starting maximum Storage monitoring UI",
                                        observer::logging::LogLevel::INFO);
   auto screen = ScreenInteractive::Fullscreen();
@@ -450,18 +432,12 @@ void ShowRealTimeMaximumAsciiUIForStorage() {
   // Terminate the process
   renderer |= CatchEvent([&](Event event) {
     if (event == Event::Character('q') || event == Event::Character('Q')) {
-      observer::utilities::GetLogger().Log(
-          "Monitoring: Terminating maximum Storage monitoring UI and exiting",
-          observer::logging::LogLevel::WARNING);
       running = false;
       screen.ExitLoopClosure()();
       return true;
     }
 
     if (event == Event::Character('r') || event == Event::Character('R')) {
-      observer::utilities::GetLogger().Log(
-          "Monitoring: Terminating maximum Storage monitoring UI and returning to main menu",
-          observer::logging::LogLevel::WARNING);
       running = false;
       should_return_to_menu = true;
       screen.ExitLoopClosure()();
@@ -472,15 +448,14 @@ void ShowRealTimeMaximumAsciiUIForStorage() {
   });
 
   screen.Loop(renderer);
+  observer::utilities::GetLogger().Log("Monitoring: Terminating maximum Storage monitoring UI",
+                                       observer::logging::LogLevel::WARNING);
 
   running = false;
   updater.join();
 
   if (should_return_to_menu) {
     OptionDetectionForStartingMenu();
-    observer::utilities::GetLogger().Log(
-        "Monitoring: Terminating maximum Storage monitoring UI and exiting",
-        observer::logging::LogLevel::WARNING);
   }
 }
 
@@ -489,9 +464,6 @@ void ShowRealTimeMaximumAsciiUIForStorage() {
  * @return int representing the user's selected option.
  */
 int OptionDetectionForStartingMenu() {
-  observer::utilities::GetLogger().Log("Monitoring: Starting observer UI",
-                                       observer::logging::LogLevel::INFO);
-
   auto screen = ScreenInteractive::Fullscreen();
 
   std::string current_user = observer::utilities::GetCurrentUser();
@@ -542,6 +514,8 @@ int OptionDetectionForStartingMenu() {
   });
 
   screen.Loop(renderer);
+  observer::utilities::GetLogger().Log("Monitoring: Terminating monitoring UI",
+                                       observer::logging::LogLevel::WARNING);
 
   if (selected_option == 1) {
     ShowRealTimeMaximumAsciiUIForCPU();

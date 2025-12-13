@@ -4,7 +4,7 @@ namespace fs = std::filesystem;
 
 namespace observer::storage {
 
-// Minimum size for storage devices (in GB)
+// Minimum size for storage devices in GB to be considered
 constexpr double MIN_STORAGE_GB = 16.00;
 
 /**
@@ -39,7 +39,7 @@ const std::string GetStorageType(const std::string& device) {
 }
 
 /**
- * @brief Read data from the mountpoint.
+ * @brief Read data from the corresponding mountpoint.
  */
 std::vector<double> GetStorageUsage(const std::string& mountpoint) {
   std::vector<double> result(3, 0.0);
