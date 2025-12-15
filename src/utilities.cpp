@@ -105,4 +105,5 @@ const std::string GetSystemTimestamp() {
   ss << std::put_time(std::localtime(&itt), "%d.%m.%Y %H:%M:%S");
   return ss.str();
 }
+
 }  // namespace observer::utilities

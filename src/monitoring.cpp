@@ -17,65 +17,61 @@ void ShowRealTimeMinimumAsciiUIForCPU() {
 
   observer::graph::LiveCPUGraph cpu_graph(300);
   cpu_graph.set_max_value(100);
+  
+  std::mutex data_mutex;
+  double current_temp = 0.0;
+  double scale_min = 30.0;
+  double scale_max = 80.0;
 
-  // Sampling thread (live graph update)
   std::thread sampler([&] {
     while (running) {
-      double t = observer::graph::simulate_cpu_temp();
-      cpu_graph.push((int)t);
+      double t = observer::cpu::GetAverageCPUTemperature();
+      
+      {
+        std::lock_guard<std::mutex> lock(data_mutex);
+        current_temp = t;
+        
+        // Adaptive scaling
+        if (t < scale_min + 5) scale_min = std::max(0.0, t - 10);
+        if (t > scale_max - 5) scale_max = std::min(120.0, t + 10);
+        
+        // Normalize to 0-100
+        double normalized = ((t - scale_min) / (scale_max - scale_min)) * 100.0;
+        cpu_graph.push((int)std::clamp(normalized, 0.0, 100.0));
+      }
 
-      // Trigger screen update
       screen.Post(Event::Custom);
-
       std::this_thread::sleep_for(100ms);
     }
   });
 
   Component component = Renderer([&] {
-    return vbox({text("=== OBSERVER: MINIMUM CPU-MONITORING ===") | bold | center | italic |
-                     color(Color::LightSkyBlue3Bis),
-                 separator(),
-                 text("CPU Model: " + observer::cpu::GetCPUModel()) | bold |
-                     color(Color::LightSkyBlue3Bis),
-                 separator(),
-                 text("Average CPU Temperature: " +
-                      std::to_string(observer::cpu::GetAverageCPUTemperature()) + " °C"),
-hbox({
-  vbox({
-    text("100°C") | color(Color::RedLight) | dim,
-    filler(),
-    text("90°C") | color(Color::RedLight) | dim,
-    filler(),
-    text("80°C") | color(Color::DarkOrange) | dim,
-    filler(),
-        text("70°C") | color(Color::Yellow2)  | dim,
-    filler(),
-        text("60°C") | color(Color::GreenYellow) | dim,
-    filler(),
-    text("50°C") | color(Color::GreenYellow) | dim,
-    filler(),
-        text("40°C") | color(Color::GreenLight) | dim,
-    filler(),
-        text("30°C") | color(Color::GreenLight) | dim,
-    filler(),
-        text("20°C") | color(Color::GreenLight) | dim,
-    filler(),
-        text("10°C") | color(Color::GreenLight)| dim,
-    filler(),
-    text("0°C") | color(Color::GreenLight)| dim,
-  }) | size(WIDTH, EQUAL, 6),
+    std::lock_guard<std::mutex> lock(data_mutex);
+    
+    auto temp_label = [&](double pct) {
+      int temp = (int)(scale_min + (scale_max - scale_min) * pct);
+      return text(std::to_string(temp) + "°C") | dim;
+    };
 
-  separator(),
-
-  ftxui::graph(std::ref(cpu_graph))
-      | color(Color::LightSkyBlue3Bis)
-      | flex
-})
-, separator(),
-                 text("MAXIMUM INFORMATION: PRESS ↑") | bold | center,
-                 text("RETURN TO STARTING MENU: PRESS [R] or [r]") | bold | center,
-                 text("EXIT: PRESS [Q]or [q]") | bold | center}) |
-           border;
+    return vbox({
+      text("=== OBSERVER: MINIMUM CPU-MONITORING ===") | bold | center | italic |
+        color(Color::LightSkyBlue3Bis),
+      separator(),
+      text("CPU Model: " + observer::cpu::GetCPUModel()) | bold | color(Color::LightSkyBlue3Bis),
+      separator(),
+      text("Temperature: " + std::to_string((int)current_temp) + " °C") | bold,
+      separator(),
+      hbox({
+        vbox({
+          temp_label(1.0), filler(), temp_label(0.75), filler(),
+          temp_label(0.5), filler(), temp_label(0.25), filler(), temp_label(0.0)
+        }) | size(WIDTH, EQUAL, 6),
+        separator(),
+        ftxui::graph(std::ref(cpu_graph)) | color(Color::LightSkyBlue3Bis) | flex
+      }),
+      separator(),
+      text("MAXIMUM INFO: ↑ | MENU: [R] | EXIT: [Q]") | bold | center
+    }) | border;
   });
 
   bool should_return_to_menu = false;
@@ -87,28 +83,25 @@ hbox({
       screen.ExitLoopClosure()();
       return true;
     }
-
     if (event == Event::Character('r') || event == Event::Character('R')) {
       running = false;
       should_return_to_menu = true;
       screen.ExitLoopClosure()();
       return true;
     }
-
     if (event == Event::ArrowUp) {
       running = false;
       should_show_maximum = true;
       screen.ExitLoopClosure()();
       return true;
     }
-
     return false;
   });
 
   screen.Loop(component);
+
   observer::utilities::GetLogger().Log("Monitoring: Terminating minimum CPU monitoring UI",
                                        observer::logging::LogLevel::WARNING);
-
   running = false;
   sampler.join();
 
@@ -118,6 +111,7 @@ hbox({
     ShowRealTimeMaximumAsciiUIForCPU();
   }
 }
+
 
 /**
  * @brief Displays a real-time ASCII UI for CPU monitoring using FTXUI.
@@ -136,7 +130,7 @@ void ShowRealTimeMaximumAsciiUIForCPU() {
   std::mutex data_mutex;
 
   double avg_temp = 0.0;
-  double avg_freq = 0.0000;
+  double avg_freq = 0.0;
   double idle_percent = 0.0;
   int ctx_switches = 0;
   int interrupts = 0;
@@ -145,61 +139,58 @@ void ShowRealTimeMaximumAsciiUIForCPU() {
   std::vector<double> freqs = observer::cpu::GetAllCPUFrequencies();
   std::vector<double> loads = observer::cpu::GetCPULoadPerCore();
 
+  auto format_double = [](double value, int precision = 2) -> std::string {
+    std::ostringstream oss;
+    oss << std::fixed << std::setprecision(precision) << value;
+    return oss.str();
+  };
+
   Component renderer = Renderer([&] {
     std::lock_guard<std::mutex> lock(data_mutex);
 
     std::vector<Element> core_rows;
     for (size_t i = 0; i < temps.size(); ++i) {
       core_rows.push_back(hbox({
-          text("Core " + std::to_string(i)) | size(WIDTH, EQUAL, 8) | color(Color::White),
+          text("Core " + std::to_string(i)) | size(WIDTH, EQUAL, 8),
           separator(),
-          text(std::to_string(temps[i]) + " °C") | size(WIDTH, EQUAL, 14) | color(Color::White),
+          text(format_double(temps[i], 1) + " °C") | size(WIDTH, EQUAL, 14),
           separator(),
-          text(std::to_string(freqs[i]) + " MHz") | size(WIDTH, EQUAL, 16) | color(Color::White),
+          text(format_double(freqs[i], 0) + " MHz") | size(WIDTH, EQUAL, 16),
           separator(),
-          text(std::to_string(loads[i]) + " %") | size(WIDTH, EQUAL, 10) | color(Color::White),
+          text(format_double(loads[i], 1) + " %") | size(WIDTH, EQUAL, 10),
       }));
     }
 
-    return vbox({text("=== OBSERVER: DETAILED CPU-MONITORING ===") | bold | center | italic |
-                     color(Color::DarkOrange),
-                 separator(),
-                 text("CPU: " + cpu_name) | bold | color(Color::LightSkyBlue3Bis),
-                 separator(),
-                 hbox({
-                     text("Core") | bold | size(WIDTH, EQUAL, 8) | color(Color::LightSkyBlue3Bis),
-                     text("| Temp (°C)") | bold | size(WIDTH, EQUAL, 15) |
-                         color(Color::LightSkyBlue3Bis),
-                     text("| Freq (MHz)") | bold | size(WIDTH, EQUAL, 17) |
-                         color(Color::LightSkyBlue3Bis),
-                     text("| Load (%)") | bold | size(WIDTH, EQUAL, 10) |
-                         color(Color::LightSkyBlue3Bis),
-                 }),
-                 separator(),
-                 vbox(core_rows),
-                 separator(),
-
-                 text("Average CPU-Temperature: " + std::to_string(avg_temp) + " °C") | bold |
-                     color(Color::White),
-                 separator(),
-                 text("Average Frequency: " + std::to_string(avg_freq) + " MHz") | bold |
-                     color(Color::White),
-                 separator(),
-                 text("Idle: " + std::to_string(idle_percent) + "%") | bold | color(Color::White),
-                 separator(),
-                 text("Context Switches/s: " + std::to_string(ctx_switches)) | bold |
-                     color(Color::White),
-                 separator(),
-                 text("Interrupts/s: " + std::to_string(interrupts)) | bold | color(Color::White),
-                 separator(),
-                 text("Observation started: " + date) | bold | color(Color::LightSkyBlue3Bis),
-                 separator(),
-                 text("Current user: " + current_user) | bold | color(Color::LightSkyBlue3Bis),
-                 separator(),
-                 text("MINIMUM INFORMATION: PRESS ↓") | bold | center,
-                 text("=== RETURN TO STARTING MENU: Press [R] or [r] ===") | bold | center,
-                 text("=== EXIT: Press [Q] or [q] ===") | bold | center}) |
-           borderLight;
+    return vbox({
+      text("=== OBSERVER: DETAILED CPU-MONITORING ===") | bold | center | italic | color(Color::DarkOrange),
+      separator(),
+      text("CPU: " + cpu_name) | bold | color(Color::LightSkyBlue3Bis),
+      separator(),
+      hbox({
+          text("Core") | bold | size(WIDTH, EQUAL, 8) | color(Color::LightSkyBlue3Bis),
+          text("| Temp (°C)") | bold | size(WIDTH, EQUAL, 15) | color(Color::LightSkyBlue3Bis),
+          text("| Freq (MHz)") | bold | size(WIDTH, EQUAL, 17) | color(Color::LightSkyBlue3Bis),
+          text("| Load (%)") | bold | size(WIDTH, EQUAL, 10) | color(Color::LightSkyBlue3Bis),
+      }),
+      separator(),
+      vbox(core_rows),
+      separator(),
+      text("Average Temperature: " + observer::utilities::FormatDouble(avg_temp, 1) + " °C") | bold,
+      separator(),
+      text("Average Frequency: " + observer::utilities::FormatDouble(avg_freq, 0) + " MHz") | bold,
+      separator(),
+      text("Idle: " + observer::utilities::FormatDouble(idle_percent, 1) + "%") | bold,
+      separator(),
+      text("Context Switches/s: " + observer::utilities::FormatDouble(ctx_switches)) | bold,
+      separator(),
+      text("Interrupts/s: " + observer::utilities::FormatDouble(interrupts)) | bold,
+      separator(),
+      text("Observation started: " + date) | bold | color(Color::LightSkyBlue3Bis),
+      separator(),
+      text("Current user: " + current_user) | bold | color(Color::LightSkyBlue3Bis),
+      separator(),
+      text("MINIMUM INFO: ↓ | MENU: [R] | EXIT: [Q]") | bold | center
+    }) | border;
   });
 
   // Background-thread for live-updates
@@ -234,21 +225,18 @@ void ShowRealTimeMaximumAsciiUIForCPU() {
   bool should_return_to_menu = false;
   bool should_show_minimum = false;
 
-  // Terminate the thread
   renderer |= CatchEvent([&](Event event) {
     if (event == Event::Character('q') || event == Event::Character('Q')) {
       running = false;
       screen.ExitLoopClosure()();
       return true;
     }
-
     if (event == Event::Character('r') || event == Event::Character('R')) {
       running = false;
       should_return_to_menu = true;
       screen.ExitLoopClosure()();
       return true;
     }
-
     if (event == Event::ArrowDown) {
       running = false;
       should_show_minimum = true;
@@ -271,6 +259,100 @@ void ShowRealTimeMaximumAsciiUIForCPU() {
     ShowRealTimeMinimumAsciiUIForCPU();
   }
 }
+/**
+ * @brief Displays a minimum real-time ASCII UI for RAM monitoring using FTXUI.
+ */
+void ShowRealTimeMinimumAsciiUIForRAM() {
+  observer::ram::SaveConfidentialRAMInfo();
+  observer::utilities::GetLogger().Log("Monitoring: Starting minimum RAM monitoring UI",
+                                       observer::logging::LogLevel::INFO);
+  auto screen = ScreenInteractive::Fullscreen();
+  std::atomic<bool> running = true;
+  
+  std::mutex data_mutex;
+  double total_ram = 0.0;
+  double available_ram = 0.0;
+  double used_ram = 0.0;
+  float used_percent = 0.0f;
+
+  auto slider = Slider("", &used_percent, 0.0f, 100.0f, 0.1f);
+
+  auto renderer = Renderer(slider, [&] {
+    std::lock_guard<std::mutex> lock(data_mutex);
+    
+    Color usage_color = used_percent > 85 ? Color::Red :
+                        used_percent > 70 ? Color::Yellow :
+                        Color::Green;
+    
+    return vbox({
+      text("=== OBSERVER: MINIMUM RAM MONITORING ===") | bold | center | italic | color(Color::DarkOrange),
+      separator(),
+      text("Total: " + std::to_string((int)total_ram) + " MB") | bold,
+      text("Used: " + std::to_string((int)used_ram) + " MB") | bold,
+      text("Available: " + std::to_string((int)available_ram) + " MB") | bold,
+      separator(),
+      hbox({
+        text("Usage: "),
+        slider->Render() | flex,
+        text(" " + std::to_string((int)used_percent) + "%")
+      }) | color(usage_color) | bold,
+      separator(),
+      text("MAXIMUM INFO: ↑ | MENU: [R] | EXIT: [Q]") | bold | center
+    }) | border;
+  });
+
+  std::thread updater([&] {
+    while (running) {
+      observer::ram::RAMInfo current_state = observer::ram::ReadRAMInfo();
+      {
+        std::lock_guard<std::mutex> lock(data_mutex);
+        total_ram = current_state.total_MB;
+        available_ram = current_state.available_MB;
+        used_ram = current_state.used_MB;
+        used_percent = (float)current_state.used_percent;
+      }
+      screen.PostEvent(Event::Custom);
+      std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    }
+  });
+
+  bool should_return_to_menu = false;
+  bool should_show_maximum = false;
+
+  renderer |= CatchEvent([&](Event event) {
+    if (event == Event::Character('q') || event == Event::Character('Q')) {
+      running = false;
+      screen.ExitLoopClosure()();
+      return true;
+    }
+    if (event == Event::Character('r') || event == Event::Character('R')) {
+      running = false;
+      should_return_to_menu = true;
+      screen.ExitLoopClosure()();
+      return true;
+    }
+    if (event == Event::ArrowUp) {
+      running = false;
+      should_show_maximum = true;
+      screen.ExitLoopClosure()();
+      return true;
+    }
+    return false;
+  });
+
+  screen.Loop(renderer);
+
+  observer::utilities::GetLogger().Log("Monitoring: Terminating minimum RAM monitoring UI",
+                                       observer::logging::LogLevel::WARNING);
+  running = false;
+  updater.join();
+
+  if (should_return_to_menu) {
+    OptionDetectionForStartingMenu();
+  } else if (should_show_maximum) {  // FIXED: check correct flag
+    ShowRealtTimeMaximumAsciiUIForRAM();
+  }
+}
 
 /**
  * @brief Displays a real-time ASCII UI for RAM monitoring using FTXUI.
@@ -285,43 +367,36 @@ void ShowRealtTimeMaximumAsciiUIForRAM() {
   std::string current_user = observer::utilities::GetCurrentUser();
 
   std::mutex data_mutex;
-
-  double total_ram = 0.0000;
-  double available_ram = 0.0000;
-  double used_ram = 0.0000;
-  double used_percent = 0.0000;
+  double total_ram = 0.0;
+  double available_ram = 0.0;
+  double used_ram = 0.0;
+  double used_percent = 0.0;
 
   Component renderer = Renderer([&] {
     std::lock_guard<std::mutex> lock(data_mutex);
 
-    return vbox({text("=== OBSERVER: DETAILED MEMORY-MONITORING ===") | bold | center | italic |
-                     color(Color::DarkOrange),
-                 separator(),
-                 text("Total memory: " + std::to_string(total_ram) + " MB") | bold |
-                     color(Color::White),
-                 separator(),
-                 text("Available memory: " + std::to_string(available_ram) + " MB") | bold |
-                     color(Color::White),
-                 separator(),
-                 text("Used memory: " + std::to_string(used_ram) + " MB") | bold |
-                     color(Color::White),
-                 separator(),
-                 text("Load: " + std::to_string(used_percent) + " %") | bold | color(Color::White),
-                 separator(),
-                 text("Observation started: " + date) | bold | color(Color::LightSkyBlue3Bis),
-                 separator(),
-                 text("Current user: " + current_user) | bold | color(Color::LightSkyBlue3Bis),
-                 separator(),
-                 text("=== RETURN TO STARTING MENU: Press [R] or [r] ===") | bold | center,
-                 text("=== EXIT: Press [Q] or [q] ===") | bold | center}) |
-           borderLight;
+    return vbox({
+      text("=== OBSERVER: MAXIMUM RAM MONITORING ===") | bold | center | italic | color(Color::DarkOrange),
+      separator(),
+      text("Total memory: " + std::to_string((int)total_ram) + " MB") | bold,
+      separator(),
+      text("Available memory: " + std::to_string((int)available_ram) + " MB") | bold,
+      separator(),
+      text("Used memory: " + std::to_string((int)used_ram) + " MB") | bold,
+      separator(),
+      text("Load: " + std::to_string((int)used_percent) + " %") | bold,
+      separator(),
+      text("Observation started: " + date) | bold | color(Color::LightSkyBlue3Bis),
+      separator(),
+      text("Current user: " + current_user) | bold | color(Color::LightSkyBlue3Bis),
+      separator(),
+      text("MINIMUM INFO: ↓ | MENU: [R] | EXIT: [Q]") | bold | center
+    }) | border;
   });
 
-  // Background-thread for live-updates
   std::thread updater([&] {
     while (running) {
       observer::ram::RAMInfo current_state = observer::ram::ReadRAMInfo();
-
       {
         std::lock_guard<std::mutex> lock(data_mutex);
         total_ram = current_state.total_MB;
@@ -329,44 +404,48 @@ void ShowRealtTimeMaximumAsciiUIForRAM() {
         used_ram = current_state.used_MB;
         used_percent = current_state.used_percent;
       }
-
       screen.PostEvent(Event::Custom);
-      std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+      std::this_thread::sleep_for(std::chrono::milliseconds(500));
     }
   });
 
   bool should_return_to_menu = false;
+  bool should_show_minimum = false;
 
-  // Terminate the thread
   renderer |= CatchEvent([&](Event event) {
     if (event == Event::Character('q') || event == Event::Character('Q')) {
       running = false;
       screen.ExitLoopClosure()();
       return true;
     }
-
     if (event == Event::Character('r') || event == Event::Character('R')) {
       running = false;
       should_return_to_menu = true;
       screen.ExitLoopClosure()();
       return true;
     }
-
+    if (event == Event::ArrowDown) {
+      running = false;
+      should_show_minimum = true; 
+      screen.ExitLoopClosure()();
+      return true;
+    }
     return false;
   });
 
   screen.Loop(renderer);
+  
   observer::utilities::GetLogger().Log("Monitoring: Terminating maximum RAM monitoring UI",
                                        observer::logging::LogLevel::WARNING);
-
   running = false;
   updater.join();
 
   if (should_return_to_menu) {
     OptionDetectionForStartingMenu();
+  } else if (should_show_minimum) { 
+    ShowRealTimeMinimumAsciiUIForRAM();
   }
 }
-
 /**
  * @brief Displays a real-time ASCII UI for Storage monitoring using FTXUI.
  */
