@@ -19,12 +19,6 @@ inline observer::logging::Logging& GetLogger() {
   return logger;
 }
 
-const std::string GetVerboseInfo(const std::string& file);
-const std::string SaveConfidentialData(std::string& document);
-const std::string GetSystemTimestamp();
-const std::string GetCurrentUser();
-const std::string GetFileOwner(const std::string& path);
-void SecureFileOwnership(const std::string& file);
 /**
  * @brief Formats a double value with specified decimal precision
  * @param value The double value to format
@@ -42,9 +36,15 @@ inline std::string FormatDouble(double value, int precision = 2) {
  * @param value The double value to format
  * @return Formatted string with no decimal places
  */
-inline std::string FormatAsInt(double value) {
-  return FormatDouble(value, 0);
-}
+inline std::string FormatAsInt(double value) { return FormatDouble(value, 0); }
+
+const std::string GetVerboseInfo(const std::string& file);
+const std::string SaveConfidentialData(std::string& document);
+const std::string GetSystemTimestamp();
+const std::string GetCurrentUser();
+const std::string GetFileOwner(const std::string& path);
+void SecureFileOwnership(const std::string& file);
+
 }  // namespace observer::utilities
 
 #endif /* INC_UTILS_UTILITIES_HPP_ */
