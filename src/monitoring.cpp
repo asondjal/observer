@@ -150,7 +150,7 @@ void ShowRealTimeMaximumAsciiUIForCPU() {
     std::lock_guard<std::mutex> lock(data_mutex);
 
     std::vector<Element> core_rows;
-    core_rows.reserve(temps.size());  // Prevent reallocation
+    core_rows.reserve(temps.size());
 
     for (size_t i = 0; i < temps.size(); ++i) {
       core_rows.push_back(hbox({
