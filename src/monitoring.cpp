@@ -7,13 +7,43 @@ using namespace ftxui;
 namespace observer::monitoring {
 
 /**
+ * @brief Handles common events for navigation and exiting the UI
+ */
+enum class NavigationAction { NONE, EXIT, MENU, ARROW_UP, ARROW_DOWN };
+
+NavigationAction HandleCommonEvents(Event event, std::atomic<bool>& running,
+                                    ScreenInteractive& screen) {
+  if (event == Event::Character('q') || event == Event::Character('Q')) {
+    running = false;
+    screen.ExitLoopClosure()();
+    return NavigationAction::EXIT;
+  }
+  if (event == Event::Character('r') || event == Event::Character('R')) {
+    running = false;
+    screen.ExitLoopClosure()();
+    return NavigationAction::MENU;
+  }
+  if (event == Event::ArrowUp) {
+    running = false;
+    screen.ExitLoopClosure()();
+    return NavigationAction::ARROW_UP;
+  }
+  if (event == Event::ArrowDown) {
+    running = false;
+    screen.ExitLoopClosure()();
+    return NavigationAction::ARROW_DOWN;
+  }
+  return NavigationAction::NONE;
+}
+
+/**
  * @brief Display of average CPU-temperature as a concatenated loop via CLI in ASCII-format
  */
 void ShowRealTimeMinimumAsciiUIForCPU() {
   observer::utilities::GetLogger().Log("Observation: Starting minimum CPU observation UI",
                                        observer::logging::LogLevel::INFO);
   auto screen = ScreenInteractive::Fullscreen();
-  std::atomic<bool> running = true;
+  std::atomic<bool> running{true};
 
   observer::graph::LiveCPUGraph cpu_graph(300);
   cpu_graph.set_max_value(100);
@@ -23,6 +53,7 @@ void ShowRealTimeMinimumAsciiUIForCPU() {
   double scale_min = 30.0;
   double scale_max = 80.0;
 
+  // Sampler thread
   std::thread sampler([&] {
     while (running) {
       double t = observer::cpu::GetAverageCPUTemperature();
@@ -31,13 +62,11 @@ void ShowRealTimeMinimumAsciiUIForCPU() {
         std::lock_guard<std::mutex> lock(data_mutex);
         current_temp = t;
 
-        // Adaptive scaling in order to reflect temperature changes better
         if (t < scale_min + 5)
           scale_min = std::max(0.0, t - 10);
         if (t > scale_max - 5)
           scale_max = std::min(120.0, t + 10);
 
-        // Normalize temperarure values to range 0-100 for realistic results
         double normalized = ((t - scale_min) / (scale_max - scale_min)) * 100.0;
         cpu_graph.push((int)std::clamp(normalized, 0.0, 100.0));
       }
@@ -72,56 +101,39 @@ void ShowRealTimeMinimumAsciiUIForCPU() {
            border;
   });
 
-  bool should_return_to_menu = false;
-  bool should_show_maximum = false;
+  NavigationAction next_action = NavigationAction::NONE;
 
   component = CatchEvent(component, [&](Event event) {
-    if (event == Event::Character('q') || event == Event::Character('Q')) {
-      running = false;
-      screen.ExitLoopClosure()();
-      return true;
-    }
-    if (event == Event::Character('r') || event == Event::Character('R')) {
-      running = false;
-      should_return_to_menu = true;
-      screen.ExitLoopClosure()();
-      return true;
-    }
-    if (event == Event::ArrowUp) {
-      running = false;
-      should_show_maximum = true;
-      screen.ExitLoopClosure()();
-      return true;
-    }
-    return false;
+    next_action = HandleCommonEvents(event, running, screen);
+    return next_action != NavigationAction::NONE;
   });
 
   screen.Loop(component);
 
   observer::utilities::GetLogger().Log("Observation: Terminating minimum CPU observation UI",
                                        observer::logging::LogLevel::WARNING);
+
   running = false;
   sampler.join();
 
-  if (should_return_to_menu) {
+  if (next_action == NavigationAction::MENU) {
     OptionDetectionForStartingMenu();
-  } else if (should_show_maximum) {
+  } else if (next_action == NavigationAction::ARROW_UP) {
     ShowRealTimeMaximumAsciiUIForCPU();
   }
 }
 
 /**
- * @brief Displays a real-time ASCII UI for CPU Observation using FTXUI. 
+ * @brief Displays a real-time ASCII UI for CPU Observation using FTXUI.
  */
 void ShowRealTimeMaximumAsciiUIForCPU() {
   observer::cpu::SaveConfidentialCPUInfo();
   observer::utilities::GetLogger().Log("Observation: Starting maximum CPU observation UI",
                                        observer::logging::LogLevel::INFO);
   auto screen = ScreenInteractive::Fullscreen();
-  std::atomic<bool> running = true;
+  std::atomic<bool> running{true};
 
   std::string cpu_name = observer::cpu::GetCPUModel();
-
   std::mutex data_mutex;
 
   double avg_temp = 0.0;
@@ -134,25 +146,21 @@ void ShowRealTimeMaximumAsciiUIForCPU() {
   std::vector<double> freqs = observer::cpu::GetAllCPUFrequencies();
   std::vector<double> loads = observer::cpu::GetCPULoadPerCore();
 
-  auto format_double = [](double value, int precision = 2) -> std::string {
-    std::ostringstream oss;
-    oss << std::fixed << std::setprecision(precision) << value;
-    return oss.str();
-  };
-
   Component renderer = Renderer([&] {
     std::lock_guard<std::mutex> lock(data_mutex);
 
     std::vector<Element> core_rows;
+    core_rows.reserve(temps.size());  // Prevent reallocation
+
     for (size_t i = 0; i < temps.size(); ++i) {
       core_rows.push_back(hbox({
           text("Core " + std::to_string(i)) | size(WIDTH, EQUAL, 8),
           separator(),
-          text(format_double(temps[i], 1) + " °C") | size(WIDTH, EQUAL, 14),
+          text(observer::utilities::FormatDouble(temps[i], 1) + " °C") | size(WIDTH, EQUAL, 14),
           separator(),
-          text(format_double(freqs[i], 0) + " MHz") | size(WIDTH, EQUAL, 16),
+          text(observer::utilities::FormatAsInt(freqs[i]) + " MHz") | size(WIDTH, EQUAL, 16),
           separator(),
-          text(format_double(loads[i], 1) + " %") | size(WIDTH, EQUAL, 10),
+          text(observer::utilities::FormatDouble(loads[i], 1) + " %") | size(WIDTH, EQUAL, 10),
       }));
     }
 
@@ -170,25 +178,17 @@ void ShowRealTimeMaximumAsciiUIForCPU() {
                          color(Color::LightSkyBlue3Bis),
                  }),
                  separator(), vbox(core_rows), separator(),
-                 text("Average Temperature: " + observer::utilities::FormatDouble(avg_temp, 2) +
-                      " °C") |
-                     bold,
+                 text("Avg Temp: " + observer::utilities::FormatDouble(avg_temp, 1) + " °C") | bold,
                  separator(),
-                 text("Average Frequency: " + observer::utilities::FormatDouble(avg_freq, 2) +
-                      " MHz") |
-                     bold,
+                 text("Avg Freq: " + observer::utilities::FormatAsInt(avg_freq) + " MHz") | bold,
                  separator(),
-                 text("Idle: " + observer::utilities::FormatDouble(idle_percent, 2) + "%") | bold,
-                 separator(),
-                 text("Context Switches/s: " + observer::utilities::FormatDouble(ctx_switches)) |
-                     bold,
-                 separator(),
-                 text("Interrupts/s: " + observer::utilities::FormatDouble(interrupts)) | bold,
+                 text("Idle: " + observer::utilities::FormatDouble(idle_percent, 1) + "%") | bold,
+                 separator(), text("Context Switches/s: " + std::to_string(ctx_switches)) | bold,
+                 separator(), text("Interrupts/s: " + std::to_string(interrupts)) | bold,
                  separator(), text("BRIEF INFO: ↓ | MENU: [R] | EXIT: [Q]") | bold | center}) |
            border;
   });
 
-  // Background-thread for live-updates
   std::thread updater([&] {
     while (running) {
       auto new_temps = observer::cpu::GetAllCPUTemperatures();
@@ -217,52 +217,37 @@ void ShowRealTimeMaximumAsciiUIForCPU() {
     }
   });
 
-  bool should_return_to_menu = false;
-  bool should_show_minimum = false;
+  NavigationAction next_action = NavigationAction::NONE;
 
   renderer |= CatchEvent([&](Event event) {
-    if (event == Event::Character('q') || event == Event::Character('Q')) {
-      running = false;
-      screen.ExitLoopClosure()();
-      return true;
-    }
-    if (event == Event::Character('r') || event == Event::Character('R')) {
-      running = false;
-      should_return_to_menu = true;
-      screen.ExitLoopClosure()();
-      return true;
-    }
-    if (event == Event::ArrowDown) {
-      running = false;
-      should_show_minimum = true;
-      screen.ExitLoopClosure()();
-      return true;
-    }
-    return false;
+    next_action = HandleCommonEvents(event, running, screen);
+    return next_action != NavigationAction::NONE;
   });
 
   screen.Loop(renderer);
-  observer::utilities::GetLogger().Log("Observation: Terminating maximum CPU Observation UI",
+
+  observer::utilities::GetLogger().Log("Observation: Terminating maximum CPU observation UI",
                                        observer::logging::LogLevel::WARNING);
 
   running = false;
   updater.join();
 
-  if (should_return_to_menu) {
+  if (next_action == NavigationAction::MENU) {
     OptionDetectionForStartingMenu();
-  } else if (should_show_minimum) {
+  } else if (next_action == NavigationAction::ARROW_DOWN) {
     ShowRealTimeMinimumAsciiUIForCPU();
   }
 }
+
 /**
  * @brief Displays a minimum real-time ASCII UI for RAM bservation using FTXUI.
  */
 void ShowRealTimeMinimumAsciiUIForRAM() {
   observer::ram::SaveConfidentialRAMInfo();
-  observer::utilities::GetLogger().Log("Observation: Starting minimum RAM Observation UI",
+  observer::utilities::GetLogger().Log("Observation: Starting minimum RAM observation UI",
                                        observer::logging::LogLevel::INFO);
   auto screen = ScreenInteractive::Fullscreen();
-  std::atomic<bool> running = true;
+  std::atomic<bool> running{true};
 
   std::mutex data_mutex;
   double total_ram = 0.0;
@@ -309,40 +294,24 @@ void ShowRealTimeMinimumAsciiUIForRAM() {
     }
   });
 
-  bool should_return_to_menu = false;
-  bool should_show_maximum = false;
+  NavigationAction next_action = NavigationAction::NONE;
 
   renderer |= CatchEvent([&](Event event) {
-    if (event == Event::Character('q') || event == Event::Character('Q')) {
-      running = false;
-      screen.ExitLoopClosure()();
-      return true;
-    }
-    if (event == Event::Character('r') || event == Event::Character('R')) {
-      running = false;
-      should_return_to_menu = true;
-      screen.ExitLoopClosure()();
-      return true;
-    }
-    if (event == Event::ArrowUp) {
-      running = false;
-      should_show_maximum = true;
-      screen.ExitLoopClosure()();
-      return true;
-    }
-    return false;
+    next_action = HandleCommonEvents(event, running, screen);
+    return next_action != NavigationAction::NONE;
   });
 
   screen.Loop(renderer);
 
   observer::utilities::GetLogger().Log("Observation: Terminating minimum RAM observation UI",
                                        observer::logging::LogLevel::WARNING);
+
   running = false;
   updater.join();
 
-  if (should_return_to_menu) {
+  if (next_action == NavigationAction::MENU) {
     OptionDetectionForStartingMenu();
-  } else if (should_show_maximum) { 
+  } else if (next_action == NavigationAction::ARROW_UP) {
     ShowRealtTimeMaximumAsciiUIForRAM();
   }
 }
@@ -355,7 +324,7 @@ void ShowRealtTimeMaximumAsciiUIForRAM() {
   observer::utilities::GetLogger().Log("Observation: Starting maximum RAM observation UI",
                                        observer::logging::LogLevel::INFO);
   auto screen = ScreenInteractive::Fullscreen();
-  std::atomic<bool> running = true;
+  std::atomic<bool> running{true};
 
   std::mutex data_mutex;
   double total_ram = 0.0;
@@ -395,40 +364,24 @@ void ShowRealtTimeMaximumAsciiUIForRAM() {
     }
   });
 
-  bool should_return_to_menu = false;
-  bool should_show_minimum = false;
+  NavigationAction next_action = NavigationAction::NONE;
 
   renderer |= CatchEvent([&](Event event) {
-    if (event == Event::Character('q') || event == Event::Character('Q')) {
-      running = false;
-      screen.ExitLoopClosure()();
-      return true;
-    }
-    if (event == Event::Character('r') || event == Event::Character('R')) {
-      running = false;
-      should_return_to_menu = true;
-      screen.ExitLoopClosure()();
-      return true;
-    }
-    if (event == Event::ArrowDown) {
-      running = false;
-      should_show_minimum = true;
-      screen.ExitLoopClosure()();
-      return true;
-    }
-    return false;
+    next_action = HandleCommonEvents(event, running, screen);
+    return next_action != NavigationAction::NONE;
   });
 
   screen.Loop(renderer);
 
   observer::utilities::GetLogger().Log("Observation: Terminating maximum RAM observation UI",
                                        observer::logging::LogLevel::WARNING);
+
   running = false;
   updater.join();
 
-  if (should_return_to_menu) {
+  if (next_action == NavigationAction::MENU) {
     OptionDetectionForStartingMenu();
-  } else if (should_show_minimum) {
+  } else if (next_action == NavigationAction::ARROW_DOWN) {
     ShowRealTimeMinimumAsciiUIForRAM();
   }
 }
@@ -441,7 +394,7 @@ void ShowRealTimeMinimumAsciiUIForStorage() {
   observer::utilities::GetLogger().Log("Observation: Starting minimum Storage observation UI",
                                        observer::logging::LogLevel::INFO);
   auto screen = ScreenInteractive::Fullscreen();
-  std::atomic<bool> running = true;
+  std::atomic<bool> running{true};
 
   std::mutex data_mutex;
   std::vector<observer::storage::StorageInfo> storages = observer::storage::ReadAllStorageDevices();
@@ -450,8 +403,9 @@ void ShowRealTimeMinimumAsciiUIForStorage() {
     std::lock_guard<std::mutex> lock(data_mutex);
 
     std::vector<Element> device_rows;
+    device_rows.reserve(storages.size());
+
     for (size_t i = 0; i < storages.size(); i++) {
-      // Calculate usage percentage for appropriate color detection
       float usage = storages[i].used_percent;
       Color bar_color = usage > 85 ? Color::Red : usage > 70 ? Color::Yellow : Color::Green;
 
@@ -485,40 +439,24 @@ void ShowRealTimeMinimumAsciiUIForStorage() {
     }
   });
 
-  bool should_return_to_menu = false;
-  bool should_show_maximum = false;
+  NavigationAction next_action = NavigationAction::NONE;
 
   renderer |= CatchEvent([&](Event event) {
-    if (event == Event::Character('q') || event == Event::Character('Q')) {
-      running = false;
-      screen.ExitLoopClosure()();
-      return true;
-    }
-    if (event == Event::Character('r') || event == Event::Character('R')) {
-      running = false;
-      should_return_to_menu = true;
-      screen.ExitLoopClosure()();
-      return true;
-    }
-    if (event == Event::ArrowUp) {
-      running = false;
-      should_show_maximum = true;
-      screen.ExitLoopClosure()();
-      return true;
-    }
-    return false;
+    next_action = HandleCommonEvents(event, running, screen);
+    return next_action != NavigationAction::NONE;
   });
 
   screen.Loop(renderer);
 
   observer::utilities::GetLogger().Log("Observation: Terminating minimum Storage observation UI",
                                        observer::logging::LogLevel::WARNING);
+
   running = false;
   updater.join();
 
-  if (should_return_to_menu) {
+  if (next_action == NavigationAction::MENU) {
     OptionDetectionForStartingMenu();
-  } else if (should_show_maximum) {
+  } else if (next_action == NavigationAction::ARROW_UP) {
     ShowRealTimeMaximumAsciiUIForStorage();
   }
 }
@@ -531,7 +469,7 @@ void ShowRealTimeMaximumAsciiUIForStorage() {
   observer::utilities::GetLogger().Log("Observation: Starting maximum Storage observation UI",
                                        observer::logging::LogLevel::INFO);
   auto screen = ScreenInteractive::Fullscreen();
-  std::atomic<bool> running = true;
+  std::atomic<bool> running{true};
 
   std::mutex data_mutex;
   std::vector<observer::storage::StorageInfo> storages = observer::storage::ReadAllStorageDevices();
@@ -540,6 +478,8 @@ void ShowRealTimeMaximumAsciiUIForStorage() {
     std::lock_guard<std::mutex> lock(data_mutex);
 
     std::vector<Element> device_rows;
+    device_rows.reserve(storages.size());
+
     for (size_t i = 0; i < storages.size(); i++) {
       device_rows.push_back(hbox({
           text(std::to_string(i + 1)) | size(WIDTH, EQUAL, 8),
@@ -550,16 +490,16 @@ void ShowRealTimeMaximumAsciiUIForStorage() {
           separator(),
           text(" " + storages[i].type) | size(WIDTH, EQUAL, 12),
           separator(),
-          text(" " + observer::utilities::FormatDouble(storages[i].total_GB, 2)) |
+          text(" " + observer::utilities::FormatDouble(storages[i].total_GB, 1)) |
               size(WIDTH, EQUAL, 16),
           separator(),
-          text(" " + observer::utilities::FormatDouble(storages[i].used_GB, 2)) |
+          text(" " + observer::utilities::FormatDouble(storages[i].used_GB, 1)) |
               size(WIDTH, EQUAL, 18),
           separator(),
-          text(" " + observer::utilities::FormatDouble(storages[i].free_GB, 2)) |
+          text(" " + observer::utilities::FormatDouble(storages[i].free_GB, 1)) |
               size(WIDTH, EQUAL, 18),
           separator(),
-          text(" " + observer::utilities::FormatDouble(storages[i].used_percent, 2)) |
+          text(" " + observer::utilities::FormatDouble(storages[i].used_percent, 1)) |
               size(WIDTH, EQUAL, 18),
           separator(),
       }));
@@ -602,40 +542,24 @@ void ShowRealTimeMaximumAsciiUIForStorage() {
     }
   });
 
-  bool should_return_to_menu = false;
-  bool should_show_minimum = false;
+  NavigationAction next_action = NavigationAction::NONE;
 
   renderer |= CatchEvent([&](Event event) {
-    if (event == Event::Character('q') || event == Event::Character('Q')) {
-      running = false;
-      screen.ExitLoopClosure()();
-      return true;
-    }
-    if (event == Event::Character('r') || event == Event::Character('R')) {
-      running = false;
-      should_return_to_menu = true;
-      screen.ExitLoopClosure()();
-      return true;
-    }
-    if (event == Event::ArrowDown) {
-      running = false;
-      should_show_minimum = true;
-      screen.ExitLoopClosure()();
-      return true;
-    }
-    return false;
+    next_action = HandleCommonEvents(event, running, screen);
+    return next_action != NavigationAction::NONE;
   });
 
   screen.Loop(renderer);
 
   observer::utilities::GetLogger().Log("Observation: Terminating maximum Storage observation UI",
                                        observer::logging::LogLevel::WARNING);
+
   running = false;
   updater.join();
 
-  if (should_return_to_menu) {
+  if (next_action == NavigationAction::MENU) {
     OptionDetectionForStartingMenu();
-  } else if (should_show_minimum) {
+  } else if (next_action == NavigationAction::ARROW_DOWN) {
     ShowRealTimeMinimumAsciiUIForStorage();
   }
 }
@@ -662,32 +586,32 @@ int OptionDetectionForStartingMenu() {
                separator(),
                text("CURRENT USER: " + current_user) | bold | color(Color::LightSkyBlue3Bis),
                separator(),
-               text("SELECTABLE OPTIONS: [1] CPU-OBSERVATION, [2] MEMORY-OBSERVATION, [3] "
-                    "STORAGE-OBSERVATION") |
-                   bold | color(Color::White),
+               text("OPTIONS: [1] CPU | [2] MEMORY | [3] STORAGE") | bold | color(Color::White),
                separator(),
-               text("=== EXIT: PRESS [Q] OR [q] ===") | bold | center |
-                   color(Color::LightSkyBlue3Bis),
+               text("=== EXIT: PRESS [Q] ===") | bold | center | color(Color::LightSkyBlue3Bis),
            }) |
            border;
   });
 
-  // Terminate the process
   int selected_option = 0;
+
   renderer |= CatchEvent([&](Event event) {
     if (event == Event::Character('1')) {
       selected_option = 1;
       screen.ExitLoopClosure()();
       return true;
-    } else if (event == Event::Character('2')) {
+    }
+    if (event == Event::Character('2')) {
       selected_option = 2;
       screen.ExitLoopClosure()();
       return true;
-    } else if (event == Event::Character('3')) {
+    }
+    if (event == Event::Character('3')) {
       selected_option = 3;
       screen.ExitLoopClosure()();
       return true;
-    } else if (event == Event::Character('q') || event == Event::Character('Q')) {
+    }
+    if (event == Event::Character('q') || event == Event::Character('Q')) {
       selected_option = 0;
       screen.ExitLoopClosure()();
       return true;
@@ -696,6 +620,7 @@ int OptionDetectionForStartingMenu() {
   });
 
   screen.Loop(renderer);
+
   observer::utilities::GetLogger().Log("Observation: Terminating observation UI",
                                        observer::logging::LogLevel::WARNING);
 
