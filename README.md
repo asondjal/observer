@@ -34,8 +34,9 @@ is essential to ensure human safety and system integrity.
 
 ## **Set-Up**
 **Disclaimer:** Before starting the installation make sure that you are in the root directory of the project.
-- Installation of project dependencies via CLI/terminal: ./setup.sh
-- Project execution via CLI/terminal: ./build/observer
+- Installation of project dependencies via CLI/terminal: ./installation.sh
+- System-wide project execution via CLI/terminal: Enter observer 
+- Uninstallation of project dependencies via CLI/terminal: ./uninstallation.sh
 
 ## **Contribution**
 

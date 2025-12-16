@@ -16,6 +16,9 @@ add_executable(observer
     src/main.cpp
 )
 
+install(TARGETS observer
+        RUNTIME DESTINATION bin)
+
 target_link_libraries(observer PRIVATE observer_lib gcov)
 
 target_link_libraries(observer PRIVATE observer_lib)
