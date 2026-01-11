@@ -85,8 +85,6 @@ const std::string SaveConfidentialData(std::string& document) {
   namespace fs = std::filesystem;
   std::string dir = "confidential";
   std::string file = dir + document;
-  observer::utilities::GetLogger().Log("Data was saved to: " + file,
-                                       observer::logging::LogLevel::INFO);
 
   if (!fs::exists(dir)) {
     fs::create_directory(dir);

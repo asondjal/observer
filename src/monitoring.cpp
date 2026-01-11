@@ -40,6 +40,7 @@ NavigationAction HandleCommonEvents(Event event, std::atomic<bool>& running,
  * @brief Display of average CPU-temperature as a concatenated loop via CLI in ASCII-format
  */
 void ShowRealTimeMinimumAsciiUIForCPU() {
+  observer::cpu::SaveConfidentialCPUInfo();
   observer::utilities::GetLogger().Log("Observation: Starting minimum CPU observation UI",
                                        observer::logging::LogLevel::INFO);
   auto screen = ScreenInteractive::Fullscreen();
