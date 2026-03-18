@@ -85,7 +85,7 @@ void ShowRealTimeMinimumAsciiUIForCPU() {
       return text(std::to_string(temp) + "°C") | dim;
     };
 
-    return vbox({text("=== OBSERVER: BRIEF CPU-OBSERVATION ===") | bold | center | italic |
+    return vbox({text("=== OBSERVER: BRIEF CPU-OBSERVATION ===") | bold | center |
                      color(Color::LightSkyBlue3Bis),
                  separator(),
                  text("CPU Model: " + observer::cpu::GetCPUModel()) | bold |
@@ -165,7 +165,7 @@ void ShowRealTimeMaximumAsciiUIForCPU() {
       }));
     }
 
-    return vbox({text("=== OBSERVER: DETAILED CPU-OBSERVATION ===") | bold | center | italic |
+    return vbox({text("=== OBSERVER: DETAILED CPU-OBSERVATION ===") | bold | center |
                      color(Color::LightSkyBlue3Bis),
                  separator(), text("CPU: " + cpu_name) | bold | color(Color::LightSkyBlue3Bis),
                  separator(),
@@ -265,7 +265,7 @@ void ShowRealTimeMinimumAsciiUIForRAM() {
                         : used_percent > 70 ? Color::Yellow
                                             : Color::Green;
 
-    return vbox({text("=== OBSERVER: BRIEF RAM OBSERVATION ===") | bold | center | italic |
+    return vbox({text("=== OBSERVER: BRIEF RAM OBSERVATION ===") | bold | center |
                      color(Color::LightSkyBlue3Bis),
                  separator(), text("Total: " + std::to_string((int)total_ram) + " MB") | bold,
                  text("Used: " + std::to_string((int)used_ram) + " MB") | bold,
@@ -336,7 +336,7 @@ void ShowRealtTimeMaximumAsciiUIForRAM() {
   Component renderer = Renderer([&] {
     std::lock_guard<std::mutex> lock(data_mutex);
 
-    return vbox({text("=== OBSERVER: DETAILED RAM OBSERVATION ===") | bold | center | italic |
+    return vbox({text("=== OBSERVER: DETAILED RAM OBSERVATION ===") | bold | center |
                      color(Color::LightSkyBlue3Bis),
                  separator(),
                  text("Total memory: " + std::to_string((int)total_ram) + " MB") | bold,
@@ -420,7 +420,7 @@ void ShowRealTimeMinimumAsciiUIForStorage() {
                 separator()}));
     }
 
-    return vbox({text("=== OBSERVER: BRIEF STORAGE OBSERVATION ===") | bold | center | italic |
+    return vbox({text("=== OBSERVER: BRIEF STORAGE OBSERVATION ===") | bold | center |
                      color(Color::LightSkyBlue3Bis),
                  separator(), vbox(device_rows),
                  text("DETAILED VIEW: ↑ | MENU: [R] | EXIT: [Q]") | bold | center |
@@ -507,7 +507,7 @@ void ShowRealTimeMaximumAsciiUIForStorage() {
     }
 
     return vbox(
-               {text("=== OBSERVER: DETAILED STORAGE OBSERVATION ===") | bold | center | italic |
+               {text("=== OBSERVER: DETAILED STORAGE OBSERVATION ===") | bold | center |
                     color(Color::LightSkyBlue3Bis),
                 separator(),
                 hbox({
@@ -577,10 +577,10 @@ int OptionDetectionForStartingMenu() {
 
   Component renderer = Renderer([&] {
     return vbox({
-               text("=== OBSERVER SYSTEM MONITOR ===") | bold | center | italic |
+               text("=== OBSERVER SYSTEM MONITOR ===") | bold | center |
                    color(Color::LightSkyBlue3Bis),
                separator(),
-               text("=== INITIAL STARTING PAGE ===") | bold | center | italic |
+               text("=== INITIAL STARTING PAGE ===") | bold | center |
                    color(Color::LightSkyBlue3Bis),
                separator(),
                text("DATE:  " + date) | bold | color(Color::White),
